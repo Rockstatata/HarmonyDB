@@ -1,17 +1,92 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 @import "tailwindcss";
 
-
 @theme {
-  --color-primary: #E23E57;
-  --color-primary-light: #FFF3F3;
-  --color-primary-dark: #BD8182;
-  --color-secondary: #88304E;
-  --color-accent: #522546;
-  --color-dark: #311D3F;
+  /* Core Brand Colors (Expanded with Shades) */
+  --color-primary: #E23E57;          /* Main rosy red */
+  --color-primary-50: #FFF3F3;       /* Very light for highlights */
+  --color-primary-100: #FFE6E6;      /* Light for subtle backgrounds */
+  --color-primary-200: #FFCCCC;      /* Lighter for cards */
+  --color-primary-300: #FF9999;      /* Medium-light for hovers */
+  --color-primary-400: #FF6666;      /* Semi-dark for active states */
+  --color-primary-500: #E23E57;      /* Default (same as primary) */
+  --color-primary-600: #CC334A;      /* Darker for buttons */
+  --color-primary-700: #B32E3D;      /* Even darker */
+  --color-primary-800: #993030;      /* Very dark */
+  --color-primary-900: #802B2B;      /* Deep dark */
+  --color-primary-light: #FFF3F3;    /* Alias for compatibility */
+  --color-primary-dark: #BD8182;     /* Alias for compatibility */
 
+  --color-secondary: #88304E;        /* Deep pink */
+  --color-secondary-50: #FCE8EC;     /* Light secondary */
+  --color-secondary-100: #F9D1D9;    /* Lighter */
+  --color-secondary-200: #F3A3B3;    /* Medium-light */
+  --color-secondary-300: #ED758D;    /* Semi-light */
+  --color-secondary-400: #E74767;    /* Semi-dark */
+  --color-secondary-500: #88304E;    /* Default */
+  --color-secondary-600: #6B2539;    /* Darker */
+  --color-secondary-700: #4E1A24;    /* Even darker */
+  --color-secondary-800: #310F16;    /* Very dark */
+  --color-secondary-900: #140509;    /* Deep dark */
+
+  --color-accent: #522546;           /* Purple accent */
+  --color-accent-50: #F0E8ED;        /* Light accent */
+  --color-accent-100: #E1D1DB;       /* Lighter */
+  --color-accent-200: #C3A3B7;       /* Medium-light */
+  --color-accent-300: #A57593;       /* Semi-light */
+  --color-accent-400: #87476F;       /* Semi-dark */
+  --color-accent-500: #522546;       /* Default */
+  --color-accent-600: #411C37;       /* Darker */
+  --color-accent-700: #301328;       /* Even darker */
+  --color-accent-800: #1F0A19;       /* Very dark */
+  --color-accent-900: #0E050A;       /* Deep dark */
+
+  --color-dark: #311D3F;             /* Dark background */
+  --color-dark-50: #E8E3F0;          /* Light dark (for subtle overlays) */
+  --color-dark-100: #D1C7E1;         /* Lighter */
+  --color-dark-200: #A38FC3;         /* Medium-light */
+  --color-dark-300: #7557A5;         /* Semi-light */
+  --color-dark-400: #472F87;         /* Semi-dark */
+  --color-dark-500: #311D3F;         /* Default */
+  --color-dark-600: #251532;         /* Darker */
+  --color-dark-700: #191025;         /* Even darker */
+  --color-dark-800: #0C0618;         /* Very dark */
+  --color-dark-900: #00000A;         /* Deep dark */
+
+  /* Utility Colors (for UI Elements) */
+  --color-background: #311D3F;       /* Main app background */
+  --color-surface: #522546;          /* Card/surface backgrounds */
+  --color-surface-light: #6B2539;    /* Lighter surfaces */
+  --color-text-primary: #FFFFFF;     /* Main text */
+  --color-text-secondary: #CCCCCC;   /* Secondary text */
+  --color-text-muted: #999999;       /* Muted text */
+  --color-border: #522546;           /* Borders */
+  --color-border-light: #6B2539;     /* Light borders */
+  --color-success: #10B981;          /* Green for success states */
+  --color-error: #EF4444;            /* Red for errors */
+  --color-warning: #F59E0B;          /* Yellow for warnings */
+  --color-info: #3B82F6;             /* Blue for info */
+
+  /* Gradients (for Spotify-like effects) */
+  --gradient-primary: linear-gradient(135deg, #E23E57 0%, #88304E 100%);
+  --gradient-secondary: linear-gradient(135deg, #88304E 0%, #522546 100%);
+  --gradient-accent: linear-gradient(135deg, #522546 0%, #311D3F 100%);
+  --gradient-dark: linear-gradient(135deg, #311D3F 0%, #140509 100%);
+
+  /* Glassmorphic Effects */
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(10px);
+
+  /* Fonts */
   --font-poppins: 'Poppins', sans-serif;
   --font-ibm: 'IBM Plex Sans', sans-serif;
 }
 
-
+/* Global Glassmorphic Utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 0.75rem; /* Rounded corners for harmony */
+}

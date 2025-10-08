@@ -1,8 +1,13 @@
 import React from 'react'
+import Sidebar from '../../components/Home/Sidebar.tsx'
 
 const Home = () => {
   return (
-    <div>Home</div>
+    <div className="bg-accent min-h-screen flex">
+      <Sidebar />
+      
+      </div>
+
   )
 }
 
