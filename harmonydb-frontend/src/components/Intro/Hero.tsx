@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { Link } from 'react-router-dom';
-import heroImage from "../assets/images/hero.jpg";
+import heroImage from "../../assets/images/hero.jpg";
 
 export default function Hero() {
   return (

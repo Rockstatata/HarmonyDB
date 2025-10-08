@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Music, ArrowLeft, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Eye, EyeOff, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/authContext';
 import Auth from '../../assets/images/auth.jpg';
 import Logo from '../../assets/images/logo.png';
 
 interface FormErrors {
   username?: string;
   password?: string;
+  general?: string;
 }
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { login, isLoading } = useAuth();
+  
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -18,23 +23,16 @@ const Login = () => {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    // Username validation
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
     }
 
-    // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -48,7 +46,7 @@ const Login = () => {
       [name]: value
     }));
 
-    // Clear error when user starts typing
+    // Clear errors when user starts typing
     if (errors[name as keyof FormErrors]) {
       setErrors(prev => ({
         ...prev,
@@ -64,17 +62,13 @@ const Login = () => {
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Login attempt:', formData);
-      // Handle successful login here
+      await login(formData.username, formData.password);
+      navigate('/home'); // Redirect to dashboard after successful login
     } catch (error) {
-      console.error('Login error:', error);
-    } finally {
-      setIsLoading(false);
+      setErrors({
+        general: error instanceof Error ? error.message : 'Login failed'
+      });
     }
   };
 
@@ -128,6 +122,14 @@ const Login = () => {
             className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20"
           >
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* General Error */}
+              {errors.general && (
+                <div className="flex items-center space-x-1 p-3 bg-red-500/20 border border-red-500/30 rounded-xl">
+                  <AlertCircle size={16} className="text-red-400" />
+                  <span className="text-red-400 text-sm">{errors.general}</span>
+                </div>
+              )}
+
               {/* Username Field */}
               <div>
                 <label htmlFor="username" className="block text-sm font-medium text-gray-200 mb-2">

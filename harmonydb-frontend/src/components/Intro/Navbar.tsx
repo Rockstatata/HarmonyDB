@@ -1,6 +1,6 @@
 import { Music, ChevronRight } from "lucide-react";
 import { Link } from 'react-router-dom';
-import Logo from "../assets/images/logo.png";
+import Logo from "../../assets/images/logo.png";
 
 export default function Navbar() {
   return (

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Music, ArrowLeft, AlertCircle, Check } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Auth from '../../assets/images/auth.jpg';
 import Logo from '../../assets/images/logo.png';
+import { useAuth } from '../../context/authContext';
 
 interface FormErrors {
   username?: string;
@@ -11,9 +12,13 @@ interface FormErrors {
   password?: string;
   confirmPassword?: string;
   role?: string;
+  general?: string;
 }
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { register, isLoading } = useAuth();
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -25,7 +30,7 @@ const Register = () => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const roles = [
     { value: 'user', label: 'Music Listener' },
@@ -99,17 +104,32 @@ const Register = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsSubmitting(true);
 
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Registration attempt:', formData);
-      // Handle successful registration here
+      // Map 'user' role to 'listener' to match backend
+      const roleMapping = {
+        'user': 'listener' as const,
+        'artist': 'artist' as const
+      };
+
+      await register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirmPassword,
+        role: roleMapping[formData.role as keyof typeof roleMapping]
+      });
+
+      // Show success message and redirect to login
+      alert('Registration successful! Please check your email to verify your account.');
+      navigate('/login');
     } catch (error) {
-      console.error('Registration error:', error);
+      setErrors({
+        general: error instanceof Error ? error.message : 'Registration failed'
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -349,14 +369,14 @@ const Register = () => {
               {/* Submit Button */}
               <motion.button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting || isLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`w-full bg-gradient-to-r from-[#E23E57] to-[#88304E] text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 ${
-                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                  isSubmitting || isLoading ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
-                {isLoading ? (
+                {isSubmitting || isLoading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                     <span>Creating Account...</span>

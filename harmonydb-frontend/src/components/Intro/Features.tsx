@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Music, Star, User, Bot, ListMusic, ChevronRight } from "lucide-react";
 import { Link } from 'react-router-dom';
-import featuresImage from "../assets/images/features.jpg";
+import featuresImage from "../../assets/images/features.jpg";
 
 export default function Features() {
   const features = [
