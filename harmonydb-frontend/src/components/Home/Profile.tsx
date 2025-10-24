@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { User, Edit, Camera, Save } from 'lucide-react';
+import { User, Edit, Camera, Save, LogOut } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { useAuth } from '../../context/authContext';
 import type { User as UserType } from '../../types';
 
 const Profile = () => {
-  const { user, setUser } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<Partial<UserType>>({});
   const [loading, setLoading] = useState(false);
@@ -207,6 +207,20 @@ const Profile = () => {
           <p className="text-gray-400">
             {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Unknown'}
           </p>
+        </div>
+      </div>
+
+      {/* Account Actions */}
+      <div className="mt-8">
+        <div className="bg-gray-900/40 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Account Actions</h3>
+          <button
+            onClick={logout}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+          >
+            <LogOut size={16} className="text-white" />
+            <span className="text-white">Logout</span>
+          </button>
         </div>
       </div>
     </div>

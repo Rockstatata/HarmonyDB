@@ -1,13 +1,8 @@
-
-interface AuthTokens {
-  access: string;
-  refresh: string;
-}
-
 import type { 
   User, Song, Album, Genre, Playlist, Favorite, 
   ListeningHistory, Comment, AIPrompt 
 } from '../types';
+import type { SQLDebugInfo } from '../context/sqlDebugTypes';
 
 const API_BASE_URL = '/api';
 
@@ -30,6 +25,105 @@ interface LoginData {
 }
 
 class ApiService {
+  // SQL Debug callback - will be set by the SQLDebugProvider
+  private sqlDebugCallback: ((debugInfo: SQLDebugInfo) => void) | null = null;
+
+  setSQLDebugCallback(callback: (debugInfo: SQLDebugInfo) => void) {
+    this.sqlDebugCallback = callback;
+  }
+
+  // Enhanced fetch wrapper that captures ALL SQL debug info
+  private async fetchWithDebug(url: string, options?: RequestInit): Promise<Response> {
+    const response = await fetch(url, options);
+    
+    // Always try to extract SQL debug info from response
+    if (response.headers.get('content-type')?.includes('application/json') || 
+        response.headers.get('X-SQL-Debug-Count')) {
+      
+      // Clone response to read it multiple times
+      const clonedResponse = response.clone();
+      
+      try {
+        const data = await clonedResponse.json();
+        this.extractSQLDebugInfo(data, response.headers);
+      } catch {
+        // If JSON parsing fails, still check headers
+        this.extractSQLDebugInfo(null, response.headers);
+      }
+    }
+    
+    return response;
+  }
+
+  private extractSQLDebugInfo(data: unknown, headers?: Headers) {
+    // First check if debug info is in the response data
+    if (data && typeof data === 'object' && data !== null && '_sql_debug' in data) {
+      const typedData = data as Record<string, unknown>;
+      if (this.sqlDebugCallback && typedData._sql_debug) {
+        this.sqlDebugCallback(typedData._sql_debug as SQLDebugInfo);
+      }
+      // Remove debug info from the actual data to keep it clean
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _sql_debug, ...cleanData } = typedData;
+      return cleanData;
+    }
+    
+    // If no debug info in data, check headers (for non-JSON responses)
+    if (headers && this.sqlDebugCallback) {
+      const queryCount = headers.get('X-SQL-Debug-Count');
+      const totalTime = headers.get('X-SQL-Debug-Time');
+      
+      if (queryCount && totalTime) {
+        // Collect individual queries from headers if available
+        const queries = [];
+        for (let i = 1; i <= Math.min(parseInt(queryCount, 10), 5); i++) {
+          const queryHeader = headers.get(`X-SQL-Debug-Query-${i}`);
+          if (queryHeader) {
+            queries.push({
+              sql: queryHeader,
+              time: '0.000', // Approximate since we don't have individual times
+              formatted_sql: this._formatSQLFromString(queryHeader)
+            });
+          }
+        }
+        
+        // If no individual queries in headers, create a summary
+        if (queries.length === 0) {
+          queries.push({
+            sql: `-- ${queryCount} SQL queries executed in ${totalTime}`,
+            time: totalTime,
+            formatted_sql: `-- Database Activity Summary:\n-- Total queries: ${queryCount}\n-- Total execution time: ${totalTime}`
+          });
+        }
+        
+        const headerDebugInfo: SQLDebugInfo = {
+          count: parseInt(queryCount, 10),
+          total_time: totalTime,
+          queries: queries
+        };
+        this.sqlDebugCallback(headerDebugInfo);
+      }
+    }
+    
+    return data;
+  }
+
+  // Helper method to format SQL strings
+  private _formatSQLFromString(sql: string): string {
+    const keywords = [
+      'SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'RIGHT JOIN', 'INNER JOIN',
+      'ORDER BY', 'GROUP BY', 'HAVING', 'LIMIT', 'INSERT', 'UPDATE', 'DELETE'
+    ];
+    
+    let formatted = sql;
+    keywords.forEach(keyword => {
+      const regex = new RegExp(`\\s+${keyword}\\s+`, 'gi');
+      formatted = formatted.replace(regex, `\n${keyword.toUpperCase()} `);
+    });
+    
+    return formatted.trim();
+  }
+
   private getHeaders(includeAuth = false) {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -73,7 +167,7 @@ class ApiService {
 
   // ==================== AUTH METHODS ====================
   async register(data: RegisterData) {
-    const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/register/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(data),
@@ -84,11 +178,12 @@ class ApiService {
       throw new Error(error.detail || 'Registration failed');
     }
 
-    return response.json();
+    const rawResult = await response.json();
+    return this.extractSQLDebugInfo(rawResult, response.headers);
   }
 
   async login(data: LoginData) {
-    const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/login/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(data),
@@ -99,13 +194,14 @@ class ApiService {
       throw new Error(error.detail || 'Login failed');
     }
 
-    const result = await response.json();
-    this.storeTokens(result.tokens);
+    const rawResult = await response.json();
+    const result = this.extractSQLDebugInfo(rawResult, response.headers);
+    this.storeTokens((result as { tokens: AuthTokens }).tokens);
     return result;
   }
 
   async getMe(): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/auth/me/`, {
+    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/me/`, {
       headers: this.getHeaders(true),
     });
 
@@ -113,11 +209,12 @@ class ApiService {
       throw new Error('Failed to get user info');
     }
 
-    return response.json();
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as User;
   }
 
   async updateProfile(data: FormData): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/auth/me/`, {
+    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/me/`, {
       method: 'PATCH',
       headers: this.getMultipartHeaders(true),
       body: data,
@@ -127,7 +224,8 @@ class ApiService {
       throw new Error('Failed to update profile');
     }
 
-    return response.json();
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as User;
   }
 
   async refreshToken() {
@@ -136,7 +234,7 @@ class ApiService {
       throw new Error('No refresh token available');
     }
 
-    const response = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/token/refresh/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ refresh: tokens.refresh }),
@@ -147,12 +245,25 @@ class ApiService {
       throw new Error('Token refresh failed');
     }
 
-    const result = await response.json();
-    this.storeTokens({ ...tokens, access: result.access });
+    const rawResult = await response.json();
+    const result = this.extractSQLDebugInfo(rawResult, response.headers);
+    this.storeTokens({ ...tokens, access: (result as { access: string }).access });
     return result;
   }
 
   logout() {
+    const tokens = this.getStoredTokens();
+    if (tokens?.refresh) {
+      // Call backend logout to blacklist tokens
+      this.fetchWithDebug(`${API_BASE_URL}/auth/logout/`, {
+        method: 'POST',
+        headers: this.getHeaders(true),
+        body: JSON.stringify({ refresh: tokens.refresh }),
+      }).catch(error => {
+        console.error('Backend logout failed:', error);
+        // Continue with local logout even if backend fails
+      });
+    }
     this.clearTokens();
   }
 
@@ -169,11 +280,12 @@ class ApiService {
       url += `?${searchParams}`;
     }
 
-    const response = await fetch(url);
+    const response = await this.fetchWithDebug(url);
     if (!response.ok) throw new Error('Failed to fetch songs');
     
-    const data = await response.json();
-    return data.results || data;
+    const rawData = await response.json();
+    const data = this.extractSQLDebugInfo(rawData);
+    return (data as { results?: Song[] }).results || (data as Song[]);
   }
 
   async getSong(id: number): Promise<Song> {
@@ -221,11 +333,12 @@ class ApiService {
       url += `?${searchParams}`;
     }
 
-    const response = await fetch(url);
+    const response = await this.fetchWithDebug(url);
     if (!response.ok) throw new Error('Failed to fetch albums');
     
-    const data = await response.json();
-    return data.results || data;
+    const rawData = await response.json();
+    const data = this.extractSQLDebugInfo(rawData);
+    return (data as { results?: Album[] }).results || (data as Album[]);
   }
 
   async getAlbum(id: number): Promise<Album> {
@@ -431,6 +544,22 @@ class ApiService {
 
     if (!response.ok) throw new Error('Failed to create AI prompt');
     return response.json();
+  }
+
+  // ==================== USER METHODS ====================
+  async getUsers(params?: Record<string, string>): Promise<User[]> {
+    let url = `${API_BASE_URL}/users/`;
+    if (params) {
+      const searchParams = new URLSearchParams(params);
+      url += `?${searchParams}`;
+    }
+
+    const response = await this.fetchWithDebug(url);
+    if (!response.ok) throw new Error('Failed to fetch users');
+    
+    const rawData = await response.json();
+    const data = this.extractSQLDebugInfo(rawData);
+    return (data as { results?: User[] }).results || (data as User[]);
   }
 }
 

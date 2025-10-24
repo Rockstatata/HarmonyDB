@@ -13,7 +13,8 @@ export default function Sidebar() {
     { to: "/home/library", label: "Your Library", icon: <Library /> },
     { to: "/home/favorites", label: "Liked Songs", icon: <Heart /> },
     { to: "/home/history", label: "Recently Played", icon: <Clock /> },
-    { to: "/home/ai", label: "AI Assistant", icon: <Brain /> }
+    { to: "/home/ai", label: "AI Assistant", icon: <Brain /> },
+    { to: "/home/playlist", label:"Playlist", icon: <PlusSquare/>}
   ];
 
   // Artist-specific items
@@ -58,13 +59,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Create Playlist Section */}
-      <div className="mt-8 px-4">
-        <button className="w-full flex items-center space-x-3 p-3 text-text-secondary hover:text-text-primary hover:bg-accent/20 rounded-lg transition-colors font-poppins">
-          <PlusSquare size={20} />
-          <span className="text-sm font-medium">Create Playlist</span>
-        </button>
-      </div>
+      
 
       {/* User Info */}
       <div className="mt-auto p-4 border-t border-accent/30">

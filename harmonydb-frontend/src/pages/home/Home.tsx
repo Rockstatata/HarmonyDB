@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Sidebar from '../../components/Home/Sidebar';
 import PlayerBar from '../../components/Home/PlayerBar';
+import Header from '../../components/Home/Header';
 import Dashboard from '../../components/Home/Dashboard';
 import MyMusic from '../../components/Home/MyMusic';
 import Library from '../../components/Home/Library';
@@ -13,6 +14,9 @@ import Search from '../../components/Home/Search';
 const Home = () => {
   return (
     <div className="bg-dark min-h-screen flex flex-col">
+      {/* Header with Search */}
+      <Header />
+      
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />

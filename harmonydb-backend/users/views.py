@@ -3,10 +3,12 @@ from rest_framework import status, generics, permissions, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from django.conf import settings
+from django.db.models import Q
 
 from .serializers import (
-    RegisterSerializer, LoginSerializer, MeSerializer,
+    RegisterSerializer, LoginSerializer, MeSerializer, UserSerializer,
     ResendVerificationSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
 )
 from .tokens import email_verification_token, password_reset_token
@@ -98,8 +100,40 @@ class ResetPasswordView(APIView):
         user.save()
         return Response({"detail": "Password reset successfully."}, 200)
 
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            # Also blacklist all outstanding tokens for this user
+            tokens = OutstandingToken.objects.filter(user=request.user)
+            for token in tokens:
+                BlacklistedToken.objects.get_or_create(token=token)
+            return Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"detail": "Logout failed."}, status=status.HTTP_400_BAD_REQUEST)
+
 # Example of a protected view that requires verified email
 class VerifiedOnlyView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
     def get(self, request):
         return Response({"detail": "You are verified and authenticated."}, 200)
+
+class UserListView(generics.ListAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        queryset = User.objects.all()
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(stage_name__icontains=search) |
+                Q(email__icontains=search)
+            )
+        return queryset

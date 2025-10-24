@@ -1,41 +1,51 @@
 import { useState, useEffect } from 'react';
-import { Search as SearchIcon, Music, User, Disc } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { Search as SearchIcon, Music, User as UserIcon, Disc } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
-import type { Song, Album, Playlist } from '../../types';
+import type { Song, Album, Playlist, User } from '../../types';
 import MediaCard from '../MediaCard';
 
 const Search = () => {
   const { playSong } = usePlayer();
-  const [query, setQuery] = useState('');
+  const [searchParams] = useSearchParams();
+  const [query, setQuery] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState<{
     songs: Song[];
     albums: Album[];
     playlists: Playlist[];
+    users: User[];
   }>({
     songs: [],
     albums: [],
-    playlists: []
+    playlists: [],
+    users: []
   });
   const [loading, setLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
+    const initialQuery = searchParams.get('q') || '';
+    setQuery(initialQuery);
+  }, [searchParams]);
+
+  useEffect(() => {
     if (!query.trim()) {
-      setResults({ songs: [], albums: [], playlists: [] });
+      setResults({ songs: [], albums: [], playlists: [], users: [] });
       return;
     }
 
     const searchDelayed = setTimeout(async () => {
       setLoading(true);
       try {
-        const [songs, albums, playlists] = await Promise.all([
+        const [songs, albums, playlists, users] = await Promise.all([
           apiService.getSongs({ search: query }),
           apiService.getAlbums({ search: query }),
-          apiService.getPlaylists({ search: query })
+          apiService.getPlaylists({ search: query }),
+          apiService.getUsers({ search: query })
         ]);
 
-        setResults({ songs, albums, playlists });
+        setResults({ songs, albums, playlists, users });
       } catch (error) {
         console.error('Search error:', error);
       } finally {
@@ -160,7 +170,7 @@ const Search = () => {
           {results.playlists.length > 0 && (
             <section>
               <div className="flex items-center space-x-2 mb-4">
-                <User className="text-white" size={24} />
+                <UserIcon className="text-white" size={24} />
                 <h2 className="text-xl font-bold text-white">Playlists</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -176,8 +186,28 @@ const Search = () => {
             </section>
           )}
 
+          {/* Users */}
+          {results.users.length > 0 && (
+            <section>
+              <div className="flex items-center space-x-2 mb-4">
+                <UserIcon className="text-white" size={24} />
+                <h2 className="text-xl font-bold text-white">Artists & Profiles</h2>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {results.users.slice(0, 6).map((user) => (
+                  <MediaCard
+                    key={user.id}
+                    title={user.display_name}
+                    subtitle={user.role === 'artist' ? 'Artist' : 'Listener'}
+                    imageSrc={user.profile_picture || '/placeholder-user.png'}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* No results */}
-          {results.songs.length === 0 && results.albums.length === 0 && results.playlists.length === 0 && (
+          {results.songs.length === 0 && results.albums.length === 0 && results.playlists.length === 0 && results.users.length === 0 && (
             <div className="text-center py-12">
               <SearchIcon className="mx-auto text-gray-600 mb-4" size={64} />
               <h3 className="text-xl font-semibold text-white mb-2">No results found</h3>

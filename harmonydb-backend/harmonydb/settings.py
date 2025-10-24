@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',  # Add this
     'corsheaders',     # Add this
     'rest_framework_simplejwt',  # Add this
+    'rest_framework_simplejwt.token_blacklist',  # Add this for token blacklisting
 ]
 
 MIDDLEWARE = [
@@ -57,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'harmonydb.middleware.SQLDebugMiddleware',  # Add SQL debug middleware
 ]
 
 AUTH_USER_MODEL = "users.User"
