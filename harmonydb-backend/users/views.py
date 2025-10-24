@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -33,9 +33,11 @@ class LoginView(APIView):
         tokens = jwt_for_user(user)
         return Response({"tokens": tokens, "user": MeSerializer(user).data}, status=200)
 
-class MeView(generics.RetrieveAPIView):
+class MeView(generics.RetrieveUpdateAPIView):
     serializer_class = MeSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+    
     def get_object(self):
         return self.request.user
 

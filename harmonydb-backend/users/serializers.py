@@ -45,10 +45,19 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid credentials.")
         return {"user": user}
 
-class MeSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email", "role", "email_verified")
+        fields = ("id", "username", "email", "role", "email_verified", "display_name", "profile_picture", "bio", "stage_name", "birth_date")
+        read_only_fields = ("id", "email_verified", "display_name")
+
+class MeSerializer(serializers.ModelSerializer):
+    display_name = serializers.ReadOnlyField()
+    
+    class Meta:
+        model = User
+        fields = ("id", "username", "email", "role", "email_verified", "display_name", "profile_picture", "bio", "stage_name", "birth_date")
+        read_only_fields = ("id", "email_verified", "display_name")
 
 class ResendVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField()
