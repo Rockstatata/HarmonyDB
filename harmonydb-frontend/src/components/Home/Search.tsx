@@ -72,18 +72,6 @@ const Search = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-6">Search</h1>
-        
-        {/* Search Input */}
-        <div className="relative max-w-md">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="What do you want to listen to?"
-            value={query}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-800 text-white rounded-full border-none outline-none focus:bg-gray-700 transition-colors"
-          />
-        </div>
       </div>
 
       {/* Recent searches */}

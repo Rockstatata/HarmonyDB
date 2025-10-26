@@ -1,5 +1,5 @@
 import { NavLink, Link } from "react-router-dom";
-import { Home, Search, Library, Heart, Clock, Brain, User, Music, Disc, PlusSquare } from "lucide-react";
+import { Home, Library, Heart, Clock, Brain, Music } from "lucide-react";
 import { useAuth } from "../../context/authContext";
 import Logo from "../../assets/images/logo.png";
 
@@ -9,19 +9,15 @@ export default function Sidebar() {
   // Base navigation items for all users
   const baseNavItems = [
     { to: "/home", label: "Home", icon: <Home /> },
-    { to: "/home/search", label: "Search", icon: <Search /> },
     { to: "/home/library", label: "Your Library", icon: <Library /> },
     { to: "/home/favorites", label: "Liked Songs", icon: <Heart /> },
     { to: "/home/history", label: "Recently Played", icon: <Clock /> },
-    { to: "/home/ai", label: "AI Assistant", icon: <Brain /> },
-    { to: "/home/playlist", label:"Playlist", icon: <PlusSquare/>}
+    { to: "/home/ai", label: "AI Assistant", icon: <Brain /> }
   ];
 
   // Artist-specific items
   const artistNavItems = [
-    { to: "/home/my-music", label: "My Music", icon: <Music /> },
-    { to: "/home/my-albums", label: "My Albums", icon: <Disc /> },
-    { to: "/home/upload", label: "Upload Music", icon: <PlusSquare /> }
+    { to: "/home/my-music", label: "My Music", icon: <Music /> }
   ];
 
   const navItems = user?.role === 'artist' 
@@ -44,46 +40,35 @@ export default function Sidebar() {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex items-center space-x-3 p-3 rounded-lg text-text-secondary hover:text-text-primary hover:bg-accent/20 transition-all duration-200 font-poppins ${
+              `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-poppins ${
                 isActive
-                  ? "bg-gradient-primary text-white border-r-2 border-primary"
-                  : ""
+                  ? "bg-accent text-text-primary"
+                  : "text-text-muted hover:text-text-primary hover:bg-surface/50"
               }`
             }
           >
-            <span className="w-6 h-6 flex items-center justify-center">
-              {item.icon}
-            </span>
-            <span className="font-medium text-sm">{item.label}</span>
+            <span className="w-5 h-5">{item.icon}</span>
+            <span className="text-sm font-medium">{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
-      
-
-      {/* User Info */}
-      <div className="mt-auto p-4 border-t border-accent/30">
-        <NavLink
-          to="/home/profile"
-          className="flex items-center space-x-3 p-3 text-text-secondary hover:text-text-primary hover:bg-accent/20 rounded-lg transition-colors"
-        >
-          <div className="w-8 h-8 bg-surface rounded-full flex items-center justify-center">
-            {user?.profile_picture ? (
-              <img 
-                src={user.profile_picture} 
-                alt="Profile" 
-                className="w-8 h-8 rounded-full object-cover"
-              />
-            ) : (
-              <User size={18} />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate font-poppins">{user?.display_name || user?.username}</p>
-            <p className="text-xs text-text-muted capitalize font-poppins">{user?.role}</p>
-          </div>
-        </NavLink>
+      {/* Role Badge */}
+      <div className="mt-6 px-6">
+        <div className={`px-3 py-2 rounded-lg text-center text-xs font-medium ${
+          user?.role === 'artist' 
+            ? 'bg-green-600/20 text-green-400 border border-green-600/30' 
+            : 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
+        }`}>
+          {user?.role === 'artist' ? '🎵 Artist Account' : '🎧 Music Listener'}
+        </div>
+        {user?.role === 'artist' && (
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Upload songs, create albums, and manage your music
+          </p>
+        )}
       </div>
+
     </aside>
   );
 }

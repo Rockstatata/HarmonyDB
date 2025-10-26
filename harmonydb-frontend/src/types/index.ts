@@ -42,6 +42,7 @@ export interface Album {
   created_at: string;
   updated_at: string;
   songs_count: number;
+  songs?: Song[];
 }
 
 export interface Genre {

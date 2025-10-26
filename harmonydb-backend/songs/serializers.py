@@ -6,22 +6,6 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
         fields = ['id', 'name', 'description']
 
-class AlbumSerializer(serializers.ModelSerializer):
-    artist_name = serializers.CharField(source="artist.display_name", read_only=True)
-    songs_count = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Album
-        fields = ['id', 'title', 'artist', 'artist_name', 'cover_image', 'release_date', 'created_at', 'updated_at', 'songs_count']
-        read_only_fields = ['artist']
-
-    def get_songs_count(self, obj):
-        return obj.songs.count()
-
-    def create(self, validated_data):
-        validated_data['artist'] = self.context['request'].user
-        return super().create(validated_data)
-
 class SongSerializer(serializers.ModelSerializer):
     artist_name = serializers.CharField(source="artist.display_name", read_only=True)
     album_title = serializers.CharField(source="album.title", read_only=True)
@@ -42,6 +26,25 @@ class SongSerializer(serializers.ModelSerializer):
         if request:
             return request.build_absolute_uri(f"/api/songs/stream/{obj.id}/")
         return None
+
+    def create(self, validated_data):
+        validated_data['artist'] = self.context['request'].user
+        # Ensure songs are approved by default for artists
+        validated_data['approved'] = True
+        return super().create(validated_data)
+
+class AlbumSerializer(serializers.ModelSerializer):
+    artist_name = serializers.CharField(source="artist.display_name", read_only=True)
+    songs_count = serializers.SerializerMethodField()
+    songs = SongSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Album
+        fields = ['id', 'title', 'artist', 'artist_name', 'cover_image', 'release_date', 'created_at', 'updated_at', 'songs_count', 'songs']
+        read_only_fields = ['artist']
+
+    def get_songs_count(self, obj):
+        return obj.songs.count()
 
     def create(self, validated_data):
         validated_data['artist'] = self.context['request'].user

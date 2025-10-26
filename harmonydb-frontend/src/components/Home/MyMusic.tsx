@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Play, Upload, Music, Disc } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Edit, Trash2, Play, Upload, Music, Disc, AlertCircle } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
 import { useAuth } from '../../context/authContext';
@@ -8,12 +9,25 @@ import type { Song, Album } from '../../types';
 const MyMusic = () => {
   const { user } = useAuth();
   const { playSong } = usePlayer();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'songs' | 'albums'>('songs');
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateAlbumModal, setShowCreateAlbumModal] = useState(false);
+  const [uploadForm, setUploadForm] = useState({
+    title: '',
+    album: '',
+    genre: '',
+    cover_image: null as File | null,
+    audio_file: null as File | null
+  });
+  const [albumForm, setAlbumForm] = useState({
+    title: '',
+    cover_image: null as File | null,
+    release_date: ''
+  });
 
   useEffect(() => {
     const fetchMyMusic = async () => {
@@ -63,11 +77,74 @@ const MyMusic = () => {
     }
   };
 
+  const handleUploadSong = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadForm.title || !uploadForm.audio_file) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', uploadForm.title);
+      formData.append('audio_file', uploadForm.audio_file);
+      if (uploadForm.album) formData.append('album', uploadForm.album);
+      if (uploadForm.genre) formData.append('genre', uploadForm.genre);
+      if (uploadForm.cover_image) formData.append('cover_image', uploadForm.cover_image);
+
+      const newSong = await apiService.createSong(formData);
+      setSongs([newSong, ...songs]);
+      setShowUploadModal(false);
+      setUploadForm({
+        title: '',
+        album: '',
+        genre: '',
+        cover_image: null,
+        audio_file: null
+      });
+    } catch (error) {
+      console.error('Error uploading song:', error);
+      alert('Failed to upload song');
+    }
+  };
+
+  const handleCreateAlbum = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!albumForm.title) {
+      alert('Please enter an album title');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('title', albumForm.title);
+      if (albumForm.cover_image) formData.append('cover_image', albumForm.cover_image);
+      if (albumForm.release_date) formData.append('release_date', albumForm.release_date);
+
+      const newAlbum = await apiService.createAlbum(formData);
+      setAlbums([newAlbum, ...albums]);
+      setShowCreateAlbumModal(false);
+      setAlbumForm({
+        title: '',
+        cover_image: null,
+        release_date: ''
+      });
+    } catch (error) {
+      console.error('Error creating album:', error);
+      alert('Failed to create album');
+    }
+  };
+
+  // Show access denied for non-artists
   if (user?.role !== 'artist') {
     return (
       <div className="p-8 text-center">
+        <AlertCircle className="mx-auto text-red-500 mb-4" size={64} />
         <h1 className="text-2xl font-bold text-white mb-4">Access Denied</h1>
-        <p className="text-gray-400">This section is only available to artists.</p>
+        <p className="text-gray-400 mb-4">This section is only available to artists.</p>
+        <p className="text-gray-500 text-sm">
+          Artists can upload their own songs, create albums, and manage their music library.
+        </p>
       </div>
     );
   }
@@ -180,9 +257,6 @@ const MyMusic = () => {
                       <Trash2 size={16} />
                     </button>
                   </div>
-                  <span className="text-gray-400 text-sm">
-                    {Math.floor(song.duration / 60)}:{String(Math.floor(song.duration % 60)).padStart(2, '0')}
-                  </span>
                 </div>
               ))}
             </div>
@@ -196,10 +270,10 @@ const MyMusic = () => {
             <div className="text-center py-12">
               <Disc className="mx-auto text-gray-600 mb-4" size={64} />
               <h3 className="text-xl font-semibold text-white mb-2">No albums yet</h3>
-              <p className="text-gray-400 mb-4">Create your first album to organize your music</p>
+              <p className="text-gray-400 mb-4">Create your first album to organize your songs</p>
               <button
                 onClick={() => setShowCreateAlbumModal(true)}
-                className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg text-white transition-colors"
+                className="bg-gray-800 hover:bg-gray-700 px-6 py-2 rounded-lg text-white transition-colors"
               >
                 Create Album
               </button>
@@ -209,6 +283,7 @@ const MyMusic = () => {
               {albums.map((album) => (
                 <div
                   key={album.id}
+                  onClick={() => navigate(`/home/album/${album.id}`)}
                   className="bg-gray-900/40 hover:bg-gray-900/60 rounded-lg p-4 group cursor-pointer transition-all duration-300"
                 >
                   <div className="relative mb-4">
@@ -217,13 +292,18 @@ const MyMusic = () => {
                       alt={album.title}
                       className="w-full aspect-square rounded-lg object-cover"
                     />
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1 bg-black/50 rounded-full text-white hover:bg-black/70">
-                        <Edit size={14} />
-                      </button>
-                    </div>
                     <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 bg-green-600 hover:bg-green-700 rounded-full">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Play first song if available
+                          if (album.songs_count > 0) {
+                            // For now, just navigate to album detail
+                            navigate(`/home/album/${album.id}`);
+                          }
+                        }}
+                        className="p-2 bg-green-600 hover:bg-green-700 rounded-full"
+                      >
                         <Play className="text-white ml-0.5" size={16} />
                       </button>
                     </div>
@@ -240,11 +320,20 @@ const MyMusic = () => {
                     )}
                   </div>
                   <div className="flex items-center space-x-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="flex-1 text-center py-1 text-gray-400 hover:text-white text-sm">
-                      Edit
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/home/album/${album.id}`);
+                      }}
+                      className="flex-1 text-center py-1 text-gray-400 hover:text-white text-sm"
+                    >
+                      View
                     </button>
                     <button
-                      onClick={() => handleDeleteAlbum(album.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteAlbum(album.id);
+                      }}
                       className="flex-1 text-center py-1 text-gray-400 hover:text-red-400 text-sm"
                     >
                       Delete
@@ -257,44 +346,145 @@ const MyMusic = () => {
         </div>
       )}
 
-      {/* Upload Modal would go here */}
+      {/* Upload Song Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold text-white mb-4">Upload Song</h2>
-            <p className="text-gray-400 mb-4">Upload form would go here</p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded text-white transition-colors">
-                Upload
-              </button>
-            </div>
+            <form onSubmit={handleUploadSong} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Song Title *
+                </label>
+                <input
+                  type="text"
+                  value={uploadForm.title}
+                  onChange={(e) => setUploadForm({...uploadForm, title: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Audio File *
+                </label>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => setUploadForm({...uploadForm, audio_file: e.target.files?.[0] || null})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Cover Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setUploadForm({...uploadForm, cover_image: e.target.files?.[0] || null})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Album (Optional)
+                </label>
+                <select
+                  value={uploadForm.album}
+                  onChange={(e) => setUploadForm({...uploadForm, album: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                >
+                  <option value="">Select Album</option>
+                  {albums.map((album) => (
+                    <option key={album.id} value={album.id}>{album.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded text-white transition-colors"
+                >
+                  Upload
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* Create Album Modal would go here */}
+      {/* Create Album Modal */}
       {showCreateAlbumModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold text-white mb-4">Create Album</h2>
-            <p className="text-gray-400 mb-4">Album creation form would go here</p>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowCreateAlbumModal(false)}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded text-white transition-colors"
-              >
-                Cancel
-              </button>
-              <button className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded text-white transition-colors">
-                Create
-              </button>
-            </div>
+            <form onSubmit={handleCreateAlbum} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Album Title *
+                </label>
+                <input
+                  type="text"
+                  value={albumForm.title}
+                  onChange={(e) => setAlbumForm({...albumForm, title: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Cover Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setAlbumForm({...albumForm, cover_image: e.target.files?.[0] || null})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Release Date
+                </label>
+                <input
+                  type="date"
+                  value={albumForm.release_date}
+                  onChange={(e) => setAlbumForm({...albumForm, release_date: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                />
+              </div>
+
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateAlbumModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded text-white transition-colors"
+                >
+                  Create
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

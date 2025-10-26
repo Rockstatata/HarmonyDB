@@ -11,7 +11,7 @@ from .serializers import (
     PlaylistSongSerializer, FavoriteSerializer, ListeningHistorySerializer, 
     CommentSerializer, AIPromptSerializer, AIInteractionSerializer
 )
-from users.permissions import IsArtistOrReadOnly, IsOwnerOrReadOnly
+from users.permissions import IsArtistOrReadOnly, IsOwnerOrReadOnly, IsArtist
 import os
 
 # ==================== SONG VIEWS ====================
@@ -49,11 +49,23 @@ class SongListCreateView(generics.ListCreateAPIView):
         
         return queryset
 
+    def perform_create(self, serializer):
+        # Ensure only artists can create songs and only their own songs
+        if self.request.user.role != 'artist':
+            raise permissions.PermissionDenied("Only artists can upload songs.")
+        serializer.save(artist=self.request.user)
+
 class SongDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
     permission_classes = [IsOwnerOrReadOnly]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    def get_queryset(self):
+        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+            # For modifications, only allow artists to modify their own songs
+            return Song.objects.filter(artist=self.request.user)
+        return Song.objects.filter(approved=True)
 
 class SongStreamView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -113,11 +125,53 @@ class AlbumListCreateView(generics.ListCreateAPIView):
         
         return queryset
 
+    def perform_create(self, serializer):
+        # Ensure only artists can create albums
+        if self.request.user.role != 'artist':
+            raise permissions.PermissionDenied("Only artists can create albums.")
+        serializer.save(artist=self.request.user)
+
 class AlbumDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Album.objects.all()
     serializer_class = AlbumSerializer
     permission_classes = [IsOwnerOrReadOnly]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
+
+    def get_queryset(self):
+        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
+            # For modifications, only allow artists to modify their own albums
+            return Album.objects.filter(artist=self.request.user)
+        return Album.objects.all()
+
+class AlbumAddSongView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, album_id):
+        album = get_object_or_404(Album, id=album_id, artist=request.user)
+        song_id = request.data.get('song_id')
+        
+        if not song_id:
+            return Response({'error': 'song_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        song = get_object_or_404(Song, id=song_id, artist=request.user)
+        
+        # Add song to album
+        song.album = album
+        song.save()
+        
+        return Response(SongSerializer(song).data, status=status.HTTP_200_OK)
+
+class AlbumRemoveSongView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, album_id, song_id):
+        album = get_object_or_404(Album, id=album_id, artist=request.user)
+        song = get_object_or_404(Song, id=song_id, artist=request.user, album=album)
+        
+        # Remove song from album
+        song.album = None
+        song.save()
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 # ==================== GENRE VIEWS ====================
 class GenreListCreateView(generics.ListCreateAPIView):
@@ -153,6 +207,9 @@ class PlaylistListCreateView(generics.ListCreateAPIView):
         
         return queryset
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class PlaylistDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PlaylistSerializer
     permission_classes = [IsOwnerOrReadOnly]
@@ -173,8 +230,9 @@ class PlaylistAddSongView(APIView):
         if not song_id:
             return Response({'error': 'song_id is required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        song = get_object_or_404(Song, id=song_id)
+        song = get_object_or_404(Song, id=song_id, approved=True)
         
+        # Both artists and listeners can add any approved song to their playlists
         playlist_song, created = PlaylistSong.objects.get_or_create(
             playlist=playlist,
             song=song,

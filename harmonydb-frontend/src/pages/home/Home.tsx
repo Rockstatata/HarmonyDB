@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../../components/Home/Sidebar';
 import PlayerBar from '../../components/Home/PlayerBar';
 import Header from '../../components/Home/Header';
@@ -10,8 +10,20 @@ import History from '../../components/Home/History';
 import AIQuery from '../../components/Home/AIQuery';
 import Profile from '../../components/Home/Profile';
 import Search from '../../components/Home/Search';
+import AlbumDetail from '../../components/Home/AlbumDetail';
+import { useAuth } from '../../context/authContext';
 
 const Home = () => {
+  const { user } = useAuth();
+
+  // Component to protect artist-only routes
+  const ArtistRoute = ({ children }: { children: React.ReactNode }) => {
+    if (user?.role !== 'artist') {
+      return <Navigate to="/home" replace />;
+    }
+    return <>{children}</>;
+  };
+
   return (
     <div className="bg-dark min-h-screen flex flex-col">
       {/* Header with Search */}
@@ -19,15 +31,27 @@ const Home = () => {
       
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        {/* Fixed Sidebar */}
+        <div className="fixed left-0 top-0 h-full z-10">
+          <Sidebar />
+        </div>
         
-        {/* Content Area */}
-        <main className="flex-1 bg-gradient-to-br from-dark via-accent to-secondary overflow-y-auto">
+        {/* Content Area with left margin for sidebar */}
+        <main className="flex-1 ml-64 bg-gradient-to-br from-dark via-accent to-secondary overflow-y-auto pb-24">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/search" element={<Search />} />
             <Route path="/library" element={<Library />} />
-            <Route path="/my-music" element={<MyMusic />} />
+            <Route path="/my-music" element={
+              <ArtistRoute>
+                <MyMusic />
+              </ArtistRoute>
+            } />
+            <Route path="/album/:id" element={
+              <ArtistRoute>
+                <AlbumDetail />
+              </ArtistRoute>
+            } />
             <Route path="/favorites" element={<Favorites />} />
             <Route path="/history" element={<History />} />
             <Route path="/ai" element={<AIQuery />} />
@@ -36,8 +60,10 @@ const Home = () => {
         </main>
       </div>
       
-      {/* Player Bar */}
-      <PlayerBar />
+      {/* Fixed Player Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-20">
+        <PlayerBar />
+      </div>
     </div>
   );
 };

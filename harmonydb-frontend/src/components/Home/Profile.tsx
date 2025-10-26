@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User, Edit, Camera, Save, LogOut } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { useAuth } from '../../context/authContext';
@@ -9,6 +9,9 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<Partial<UserType>>({});
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -26,6 +29,22 @@ const Profile = () => {
     setProfileData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -38,9 +57,16 @@ const Profile = () => {
         }
       });
 
+      // Add profile picture if selected
+      if (selectedImage) {
+        formData.append('profile_picture', selectedImage);
+      }
+
       const updatedUser = await apiService.updateProfile(formData);
       setUser(updatedUser);
       setIsEditing(false);
+      setSelectedImage(null);
+      setImagePreview(null);
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
@@ -63,7 +89,13 @@ const Profile = () => {
         <div className="flex items-center space-x-6 mb-8">
           <div className="relative">
             <div className="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
-              {user.profile_picture ? (
+              {imagePreview ? (
+                <img 
+                  src={imagePreview} 
+                  alt="Profile Preview" 
+                  className="w-full h-full object-cover"
+                />
+              ) : user.profile_picture ? (
                 <img 
                   src={user.profile_picture} 
                   alt="Profile" 
@@ -74,10 +106,21 @@ const Profile = () => {
               )}
             </div>
             {isEditing && (
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+              <button
+                onClick={handleCameraClick}
+                className="absolute bottom-0 right-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700 transition-colors"
+              >
                 <Camera size={16} className="text-white" />
               </button>
             )}
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
@@ -85,7 +128,21 @@ const Profile = () => {
                 {user.display_name || user.username}
               </h1>
               <button
-                onClick={() => setIsEditing(!isEditing)}
+                onClick={() => {
+                  if (isEditing) {
+                    // Cancel editing - reset to original data
+                    setProfileData({
+                      username: user.username,
+                      email: user.email,
+                      bio: user.bio || '',
+                      stage_name: user.stage_name || '',
+                      birth_date: user.birth_date || '',
+                    });
+                    setSelectedImage(null);
+                    setImagePreview(null);
+                  }
+                  setIsEditing(!isEditing);
+                }}
                 className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <Edit size={16} className="text-white" />

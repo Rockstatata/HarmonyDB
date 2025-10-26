@@ -33,8 +33,10 @@ class ApiService {
   }
 
   // Enhanced fetch wrapper that captures ALL SQL debug info
-  private async fetchWithDebug(url: string, options?: RequestInit): Promise<Response> {
+  private async fetchWithDebug(url: string, options?: RequestInit): Promise<{ response: Response; data?: unknown }> {
     const response = await fetch(url, options);
+    
+    let cleanedData: unknown = undefined;
     
     // Always try to extract SQL debug info from response
     if (response.headers.get('content-type')?.includes('application/json') || 
@@ -45,14 +47,14 @@ class ApiService {
       
       try {
         const data = await clonedResponse.json();
-        this.extractSQLDebugInfo(data, response.headers);
+        cleanedData = this.extractSQLDebugInfo(data, response.headers);
       } catch {
         // If JSON parsing fails, still check headers
         this.extractSQLDebugInfo(null, response.headers);
       }
     }
     
-    return response;
+    return { response, data: cleanedData };
   }
 
   private extractSQLDebugInfo(data: unknown, headers?: Headers) {
@@ -167,7 +169,7 @@ class ApiService {
 
   // ==================== AUTH METHODS ====================
   async register(data: RegisterData) {
-    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/register/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/auth/register/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(data),
@@ -183,7 +185,7 @@ class ApiService {
   }
 
   async login(data: LoginData) {
-    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/login/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/auth/login/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(data),
@@ -201,7 +203,7 @@ class ApiService {
   }
 
   async getMe(): Promise<User> {
-    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/me/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/auth/me/`, {
       headers: this.getHeaders(true),
     });
 
@@ -214,7 +216,7 @@ class ApiService {
   }
 
   async updateProfile(data: FormData): Promise<User> {
-    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/me/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/auth/me/`, {
       method: 'PATCH',
       headers: this.getMultipartHeaders(true),
       body: data,
@@ -234,7 +236,7 @@ class ApiService {
       throw new Error('No refresh token available');
     }
 
-    const response = await this.fetchWithDebug(`${API_BASE_URL}/auth/token/refresh/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/auth/token/refresh/`, {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ refresh: tokens.refresh }),
@@ -280,12 +282,17 @@ class ApiService {
       url += `?${searchParams}`;
     }
 
-    const response = await this.fetchWithDebug(url);
+    const { response, data } = await this.fetchWithDebug(url);
     if (!response.ok) throw new Error('Failed to fetch songs');
     
+    if (data) {
+      return (data as { results?: Song[] }).results || (data as Song[]);
+    }
+    
+    // Fallback: parse response manually if data extraction failed
     const rawData = await response.json();
-    const data = this.extractSQLDebugInfo(rawData);
-    return (data as { results?: Song[] }).results || (data as Song[]);
+    const cleanedData = this.extractSQLDebugInfo(rawData, response.headers);
+    return (cleanedData as { results?: Song[] }).results || (cleanedData as Song[]);
   }
 
   async getSong(id: number): Promise<Song> {
@@ -333,12 +340,17 @@ class ApiService {
       url += `?${searchParams}`;
     }
 
-    const response = await this.fetchWithDebug(url);
+    const { response, data } = await this.fetchWithDebug(url);
     if (!response.ok) throw new Error('Failed to fetch albums');
     
+    if (data) {
+      return (data as { results?: Album[] }).results || (data as Album[]);
+    }
+    
+    // Fallback: parse response manually if data extraction failed
     const rawData = await response.json();
-    const data = this.extractSQLDebugInfo(rawData);
-    return (data as { results?: Album[] }).results || (data as Album[]);
+    const cleanedData = this.extractSQLDebugInfo(rawData, response.headers);
+    return (cleanedData as { results?: Album[] }).results || (cleanedData as Album[]);
   }
 
   async getAlbum(id: number): Promise<Album> {
@@ -378,9 +390,28 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to delete album');
   }
 
+  async addSongToAlbum(albumId: number, songId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/add-song/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ song_id: songId }),
+    });
+
+    if (!response.ok) throw new Error('Failed to add song to album');
+  }
+
+  async removeSongFromAlbum(albumId: number, songId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/remove-song/${songId}/`, {
+      method: 'DELETE',
+      headers: this.getHeaders(true),
+    });
+
+    if (!response.ok) throw new Error('Failed to remove song from album');
+  }
+
   // ==================== GENRE METHODS ====================
   async getGenres(): Promise<Genre[]> {
-    const response = await fetch(`${API_BASE_URL}/genres/`);
+    const response = await fetch(`${API_BASE_URL}/songs/genres/`);
     if (!response.ok) throw new Error('Failed to fetch genres');
     
     const data = await response.json();
@@ -554,12 +585,17 @@ class ApiService {
       url += `?${searchParams}`;
     }
 
-    const response = await this.fetchWithDebug(url);
+    const { response, data } = await this.fetchWithDebug(url);
     if (!response.ok) throw new Error('Failed to fetch users');
     
+    if (data) {
+      return (data as { results?: User[] }).results || (data as User[]);
+    }
+    
+    // Fallback: parse response manually if data extraction failed
     const rawData = await response.json();
-    const data = this.extractSQLDebugInfo(rawData);
-    return (data as { results?: User[] }).results || (data as User[]);
+    const cleanedData = this.extractSQLDebugInfo(rawData, response.headers);
+    return (cleanedData as { results?: User[] }).results || (cleanedData as User[]);
   }
 }
 
