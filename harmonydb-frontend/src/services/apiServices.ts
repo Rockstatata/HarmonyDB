@@ -1,10 +1,10 @@
 import type { 
-  User, Song, Album, Genre, Playlist, Favorite, 
+  User, Song, Album, Genre, Playlist, PlaylistSong, Favorite, 
   ListeningHistory, Comment, AIPrompt 
 } from '../types';
 import type { SQLDebugInfo } from '../context/sqlDebugTypes';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 interface AuthTokens {
   access: string;
@@ -230,6 +230,19 @@ class ApiService {
     return this.extractSQLDebugInfo(rawData, response.headers) as User;
   }
 
+  async changePassword(data: { current_password: string; new_password: string; confirm_new_password: string }): Promise<void> {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/auth/change-password/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || error.current_password?.[0] || error.new_password?.[0] || 'Password change failed');
+    }
+  }
+
   async refreshToken() {
     const tokens = this.getStoredTokens();
     if (!tokens?.refresh) {
@@ -296,35 +309,41 @@ class ApiService {
   }
 
   async getSong(id: number): Promise<Song> {
-    const response = await fetch(`${API_BASE_URL}/songs/${id}/`);
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/${id}/`);
     if (!response.ok) throw new Error('Failed to fetch song');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Song;
   }
 
   async createSong(data: FormData): Promise<Song> {
-    const response = await fetch(`${API_BASE_URL}/songs/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/`, {
       method: 'POST',
       headers: this.getMultipartHeaders(true),
       body: data,
     });
 
     if (!response.ok) throw new Error('Failed to create song');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Song;
   }
 
   async updateSong(id: number, data: FormData): Promise<Song> {
-    const response = await fetch(`${API_BASE_URL}/songs/${id}/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/${id}/`, {
       method: 'PATCH',
       headers: this.getMultipartHeaders(true),
       body: data,
     });
 
     if (!response.ok) throw new Error('Failed to update song');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Song;
   }
 
   async deleteSong(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/songs/${id}/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/${id}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -354,35 +373,41 @@ class ApiService {
   }
 
   async getAlbum(id: number): Promise<Album> {
-    const response = await fetch(`${API_BASE_URL}/albums/${id}/`);
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/albums/${id}/`);
     if (!response.ok) throw new Error('Failed to fetch album');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Album;
   }
 
   async createAlbum(data: FormData): Promise<Album> {
-    const response = await fetch(`${API_BASE_URL}/albums/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/albums/`, {
       method: 'POST',
       headers: this.getMultipartHeaders(true),
       body: data,
     });
 
     if (!response.ok) throw new Error('Failed to create album');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Album;
   }
 
   async updateAlbum(id: number, data: FormData): Promise<Album> {
-    const response = await fetch(`${API_BASE_URL}/albums/${id}/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/albums/${id}/`, {
       method: 'PATCH',
       headers: this.getMultipartHeaders(true),
       body: data,
     });
 
     if (!response.ok) throw new Error('Failed to update album');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Album;
   }
 
   async deleteAlbum(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/albums/${id}/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/albums/${id}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -391,7 +416,7 @@ class ApiService {
   }
 
   async addSongToAlbum(albumId: number, songId: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/add-song/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/albums/${albumId}/add-song/`, {
       method: 'POST',
       headers: this.getHeaders(true),
       body: JSON.stringify({ song_id: songId }),
@@ -401,7 +426,7 @@ class ApiService {
   }
 
   async removeSongFromAlbum(albumId: number, songId: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/albums/${albumId}/remove-song/${songId}/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/albums/${albumId}/remove-song/${songId}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -411,11 +436,17 @@ class ApiService {
 
   // ==================== GENRE METHODS ====================
   async getGenres(): Promise<Genre[]> {
-    const response = await fetch(`${API_BASE_URL}/songs/genres/`);
+    const { response, data } = await this.fetchWithDebug(`${API_BASE_URL}/songs/genres/`);
     if (!response.ok) throw new Error('Failed to fetch genres');
     
-    const data = await response.json();
-    return data.results || data;
+    if (data) {
+      return (data as { results?: Genre[] }).results || (data as Genre[]);
+    }
+    
+    // Fallback: parse response manually if data extraction failed
+    const rawData = await response.json();
+    const cleanedData = this.extractSQLDebugInfo(rawData, response.headers);
+    return (cleanedData as { results?: Genre[] }).results || (cleanedData as Genre[]);
   }
 
   // ==================== PLAYLIST METHODS ====================
@@ -474,7 +505,7 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to delete playlist');
   }
 
-  async addSongToPlaylist(playlistId: number, songId: number): Promise<void> {
+  async addSongToPlaylist(playlistId: number, songId: number): Promise<PlaylistSong> {
     const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/add-song/`, {
       method: 'POST',
       headers: this.getHeaders(true),
@@ -482,6 +513,7 @@ class ApiService {
     });
 
     if (!response.ok) throw new Error('Failed to add song to playlist');
+    return response.json();
   }
 
   async removeSongFromPlaylist(playlistId: number, songId: number): Promise<void> {
@@ -526,7 +558,7 @@ class ApiService {
 
   // ==================== HISTORY METHODS ====================
   async getListeningHistory(): Promise<ListeningHistory[]> {
-    const response = await fetch(`${API_BASE_URL}/history/`, {
+    const response = await fetch(`${API_BASE_URL}/songs/history/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch listening history');

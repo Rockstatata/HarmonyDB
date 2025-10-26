@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { User, Edit, Camera, Save, LogOut } from 'lucide-react';
+import { User, Edit, Camera, Save, LogOut, Lock, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { useAuth } from '../../context/authContext';
 import type { User as UserType } from '../../types';
@@ -11,6 +11,18 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_new_password: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -72,6 +84,44 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (passwordForm.new_password !== passwordForm.confirm_new_password) {
+      alert('New passwords do not match');
+      return;
+    }
+
+    if (passwordForm.new_password.length < 8) {
+      alert('New password must be at least 8 characters long');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await apiService.changePassword(passwordForm);
+      alert('Password changed successfully');
+      setShowChangePassword(false);
+      setPasswordForm({
+        current_password: '',
+        new_password: '',
+        confirm_new_password: ''
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert(error instanceof Error ? error.message : 'Failed to change password');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   if (!user) {
@@ -270,16 +320,128 @@ const Profile = () => {
       {/* Account Actions */}
       <div className="mt-8">
         <div className="bg-gray-900/40 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Account Actions</h3>
-          <button
-            onClick={logout}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-          >
-            <LogOut size={16} className="text-white" />
-            <span className="text-white">Logout</span>
-          </button>
+          <h3 className="text-lg font-semibold text-white mb-4">Account Settings</h3>
+          <div className="space-y-4">
+            <button
+              onClick={() => setShowChangePassword(!showChangePassword)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            >
+              <Lock size={16} className="text-white" />
+              <span className="text-white">Change Password</span>
+            </button>
+            
+            <button
+              onClick={logout}
+              className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+            >
+              <LogOut size={16} className="text-white" />
+              <span className="text-white">Logout</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-white mb-4">Change Password</h2>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Current Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.current ? "text" : "password"}
+                    value={passwordForm.current_password}
+                    onChange={(e) => setPasswordForm({...passwordForm, current_password: e.target.value})}
+                    className="w-full px-3 py-2 pr-10 bg-gray-800 text-white rounded border border-gray-700 focus:border-blue-500 outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('current')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showPasswords.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  New Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.new ? "text" : "password"}
+                    value={passwordForm.new_password}
+                    onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
+                    className="w-full px-3 py-2 pr-10 bg-gray-800 text-white rounded border border-gray-700 focus:border-blue-500 outline-none"
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('new')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showPasswords.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p className="text-gray-500 text-xs mt-1">Must be at least 8 characters long</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm New Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasswords.confirm ? "text" : "password"}
+                    value={passwordForm.confirm_new_password}
+                    onChange={(e) => setPasswordForm({...passwordForm, confirm_new_password: e.target.value})}
+                    className="w-full px-3 py-2 pr-10 bg-gray-800 text-white rounded border border-gray-700 focus:border-blue-500 outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => togglePasswordVisibility('confirm')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showPasswords.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setPasswordForm({
+                      current_password: '',
+                      new_password: '',
+                      confirm_new_password: ''
+                    });
+                  }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded text-white transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={passwordLoading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed py-2 rounded text-white transition-colors"
+                >
+                  {passwordLoading ? 'Changing...' : 'Change Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

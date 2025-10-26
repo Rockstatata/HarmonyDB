@@ -5,6 +5,7 @@ import Header from '../../components/Home/Header';
 import Dashboard from '../../components/Home/Dashboard';
 import MyMusic from '../../components/Home/MyMusic';
 import Library from '../../components/Home/Library';
+import PlaylistDetail from '../../components/Home/PlaylistDetail';
 import Favorites from '../../components/Home/Favorites';
 import History from '../../components/Home/History';
 import AIQuery from '../../components/Home/AIQuery';
@@ -42,6 +43,7 @@ const Home = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/search" element={<Search />} />
             <Route path="/library" element={<Library />} />
+            <Route path="/playlist/:id" element={<PlaylistDetail />} />
             <Route path="/my-music" element={
               <ArtistRoute>
                 <MyMusic />

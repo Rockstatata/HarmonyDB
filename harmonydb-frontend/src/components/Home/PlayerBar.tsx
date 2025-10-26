@@ -114,13 +114,13 @@ const PlayerBar = () => {
           <div 
             ref={progressRef}
             onClick={handleProgressClick}
-            className="flex-1 h-1 bg-accent/50 rounded-full cursor-pointer group"
+            className="flex-1 h-1 bg-accent/50 rounded-full cursor-pointer group relative"
           >
             <div 
-              className="h-full bg-gradient-primary rounded-full relative group-hover:bg-primary transition-colors"
+              className="h-full bg-gradient-primary rounded-full relative"
               style={{ width: `${progressPercentage}%` }}
             >
-              <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+              <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full shadow-lg" />
             </div>
           </div>
           <span>{formatTime(state.duration)}</span>

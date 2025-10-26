@@ -79,10 +79,28 @@ class PlaylistSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    item = serializers.SerializerMethodField()
+    
     class Meta:
         model = Favorite
-        fields = ['id', 'user', 'item_type', 'item_id', 'created_at']
+        fields = ['id', 'user', 'item_type', 'item_id', 'item', 'created_at']
         read_only_fields = ['user']
+
+    def get_item(self, obj):
+        """Get the actual item data based on item_type and item_id"""
+        try:
+            if obj.item_type == 'song':
+                song = Song.objects.get(id=obj.item_id)
+                return SongSerializer(song, context=self.context).data
+            elif obj.item_type == 'album':
+                album = Album.objects.get(id=obj.item_id)
+                return AlbumSerializer(album, context=self.context).data
+            elif obj.item_type == 'playlist':
+                playlist = Playlist.objects.get(id=obj.item_id)
+                return PlaylistSerializer(playlist, context=self.context).data
+        except (Song.DoesNotExist, Album.DoesNotExist, Playlist.DoesNotExist):
+            return None
+        return None
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user

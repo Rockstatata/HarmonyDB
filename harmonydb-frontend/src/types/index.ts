@@ -77,6 +77,7 @@ export interface Favorite {
   user: number;
   item_type: 'song' | 'album' | 'playlist';
   item_id: number;
+  item?: Song | Album | Playlist; // The actual item data
   created_at: string;
 }
 

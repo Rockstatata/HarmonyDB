@@ -9,7 +9,8 @@ from django.db.models import Q
 
 from .serializers import (
     RegisterSerializer, LoginSerializer, MeSerializer, UserSerializer,
-    ResendVerificationSerializer, ForgotPasswordSerializer, ResetPasswordSerializer
+    ResendVerificationSerializer, ForgotPasswordSerializer, ResetPasswordSerializer,
+    ChangePasswordSerializer
 )
 from .tokens import email_verification_token, password_reset_token
 from .utils import encode_uid, decode_uid
@@ -137,3 +138,13 @@ class UserListView(generics.ListAPIView):
                 Q(email__icontains=search)
             )
         return queryset
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

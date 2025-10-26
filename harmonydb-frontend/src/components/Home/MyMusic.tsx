@@ -4,7 +4,7 @@ import { Plus, Edit, Trash2, Play, Upload, Music, Disc, AlertCircle } from 'luci
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
 import { useAuth } from '../../context/authContext';
-import type { Song, Album } from '../../types';
+import type { Song, Album, Genre } from '../../types';
 
 const MyMusic = () => {
   const { user } = useAuth();
@@ -13,6 +13,7 @@ const MyMusic = () => {
   const [activeTab, setActiveTab] = useState<'songs' | 'albums'>('songs');
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showCreateAlbumModal, setShowCreateAlbumModal] = useState(false);
@@ -34,13 +35,15 @@ const MyMusic = () => {
       if (!user) return;
       
       try {
-        const [userSongs, userAlbums] = await Promise.all([
+        const [userSongs, userAlbums, allGenres] = await Promise.all([
           apiService.getSongs({ artist: user.id.toString() }),
-          apiService.getAlbums({ artist: user.id.toString() })
+          apiService.getAlbums({ artist: user.id.toString() }),
+          apiService.getGenres()
         ]);
 
         setSongs(userSongs);
         setAlbums(userAlbums);
+        setGenres(allGenres);
       } catch (error) {
         console.error('Error fetching my music:', error);
       } finally {
@@ -402,6 +405,22 @@ const MyMusic = () => {
                   <option value="">Select Album</option>
                   {albums.map((album) => (
                     <option key={album.id} value={album.id}>{album.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Genre (Optional)
+                </label>
+                <select
+                  value={uploadForm.genre}
+                  onChange={(e) => setUploadForm({...uploadForm, genre: e.target.value})}
+                  className="w-full px-3 py-2 bg-gray-800 text-white rounded border border-gray-700 focus:border-green-500 outline-none"
+                >
+                  <option value="">Select Genre</option>
+                  {genres && Array.isArray(genres) && genres.map((genre) => (
+                    <option key={genre.id} value={genre.id}>{genre.name}</option>
                   ))}
                 </select>
               </div>

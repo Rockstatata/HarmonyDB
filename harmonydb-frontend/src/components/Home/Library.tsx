@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Music, Heart, Play, Plus, Users, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Music, Play, Plus, Users, Lock } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
-import { usePlayer } from '../../context/playerContext';
 import { useAuth } from '../../context/authContext';
-import type { Song, Album, Playlist } from '../../types';
+import type { Playlist } from '../../types';
 
 const Library = () => {
   const { user } = useAuth();
-  const { playSong } = usePlayer();
+  const navigate = useNavigate();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -21,7 +21,7 @@ const Library = () => {
     const fetchLibrary = async () => {
       try {
         // Fetch user's own playlists
-        const userPlaylists = await apiService.getPlaylists({ user: user?.id.toString() });
+        const userPlaylists = user ? await apiService.getPlaylists({ user: user.id.toString() }) : [];
         setPlaylists(userPlaylists);
       } catch (error) {
         console.error('Error fetching library:', error);
@@ -96,6 +96,7 @@ const Library = () => {
         {playlists.map((playlist) => (
           <div
             key={playlist.id}
+            onClick={() => navigate(`/home/playlist/${playlist.id}`)}
             className="bg-gray-900/40 hover:bg-gray-900/60 rounded-lg p-4 group cursor-pointer transition-all duration-300"
           >
             <div className="relative mb-4">

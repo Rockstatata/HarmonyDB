@@ -150,16 +150,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const resumeSong = () => {
     if (audioRef.current) {
-      audioRef.current.play();
+      audioRef.current.play().catch(console.error);
     }
     dispatch({ type: 'RESUME' });
   };
 
   const skipToNext = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     dispatch({ type: 'SKIP_NEXT' });
   };
 
   const skipToPrevious = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     dispatch({ type: 'SKIP_PREVIOUS' });
   };
 
@@ -198,11 +206,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     }
 
     const audio = audioRef.current;
-    audio.src = state.currentSong.audio_url;
+    
+    // Only set src if it's different to prevent reloading
+    if (audio.src !== state.currentSong.audio_url) {
+      audio.src = state.currentSong.audio_url;
+    }
+    
     audio.volume = state.volume;
 
     if (state.isPlaying) {
       audio.play().catch(console.error);
+    } else {
+      audio.pause();
     }
 
     const handleTimeUpdate = () => {
@@ -220,7 +235,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         audio.currentTime = 0;
         audio.play();
       } else {
-        skipToNext();
+        dispatch({ type: 'SKIP_NEXT' });
       }
     };
 
@@ -233,7 +248,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('loadedmetadata', handleTimeUpdate);
     };
-  }, [state.currentSong, state.isPlaying, state.volume, state.repeat]);
+  }, [state.currentSong, state.isPlaying, state.repeat, state.volume]);
+
+  // Handle volume changes separately to avoid resetting playback
+  React.useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = state.volume;
+    }
+  }, [state.volume]);
 
   const value: PlayerContextType = {
     state,
