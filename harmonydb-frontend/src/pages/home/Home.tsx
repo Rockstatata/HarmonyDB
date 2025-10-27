@@ -12,6 +12,8 @@ import AIQuery from '../../components/Home/AIQuery';
 import Profile from '../../components/Home/Profile';
 import Search from '../../components/Home/Search';
 import AlbumDetail from '../../components/Home/AlbumDetail';
+import Artists from '../../components/Home/Artists';
+import ArtistDetail from '../../components/Home/ArtistDetail';
 import { useAuth } from '../../context/authContext';
 
 const Home = () => {
@@ -44,6 +46,8 @@ const Home = () => {
             <Route path="/search" element={<Search />} />
             <Route path="/library" element={<Library />} />
             <Route path="/playlist/:id" element={<PlaylistDetail />} />
+            <Route path="/artists" element={<Artists />} />
+            <Route path="/artist/:id" element={<ArtistDetail />} />
             <Route path="/my-music" element={
               <ArtistRoute>
                 <MyMusic />

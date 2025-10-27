@@ -4,6 +4,33 @@ import type {
 } from '../types';
 import type { SQLDebugInfo } from '../context/sqlDebugTypes';
 
+// AI Response types
+interface AIQueryResponse {
+  prompt_id: number;
+  query: string;
+  intent: string;
+  entities: Record<string, string | number | null>;
+  ai_response: string;
+  result_type: 'songs' | 'albums' | 'artists' | 'stats' | 'error';
+  results: Song[] | Album[] | User[] | Record<string, string | number>;
+  count: number;
+  sql_query: string;
+  success: boolean;
+}
+
+interface AIRecommendationsResponse {
+  recommendations: Song[];
+  count: number;
+  recommendation_reason: string;
+  success: boolean;
+}
+
+interface AIInsightsResponse {
+  insights: Record<string, string | number>;
+  summary: string;
+  success: boolean;
+}
+
 const API_BASE_URL = 'http://localhost:8000/api';
 
 interface AuthTokens {
@@ -32,9 +59,30 @@ class ApiService {
     this.sqlDebugCallback = callback;
   }
 
-  // Enhanced fetch wrapper that captures ALL SQL debug info
+  // Enhanced fetch wrapper that captures ALL SQL debug info and handles token refresh
   private async fetchWithDebug(url: string, options?: RequestInit): Promise<{ response: Response; data?: unknown }> {
-    const response = await fetch(url, options);
+    let response = await fetch(url, options);
+    
+    // If we get a 401 and have a refresh token, try to refresh and retry
+    if (response.status === 401 && this.getStoredTokens()?.refresh) {
+      try {
+        await this.refreshToken();
+        // Retry the request with the new token
+        const newOptions = { ...options };
+        if (newOptions.headers) {
+          const tokens = this.getStoredTokens();
+          if (tokens?.access) {
+            // Update the Authorization header with the new token
+            (newOptions.headers as Record<string, string>).Authorization = `Bearer ${tokens.access}`;
+          }
+        }
+        response = await fetch(url, newOptions);
+      } catch (refreshError) {
+        // If refresh fails, clear tokens and rethrow
+        this.clearTokens();
+        throw refreshError;
+      }
+    }
     
     let cleanedData: unknown = undefined;
     
@@ -108,6 +156,34 @@ class ApiService {
     }
     
     return data;
+  }
+
+  // Helper method to handle token refresh for regular fetch calls
+  private async fetchWithAuth(url: string, options?: RequestInit): Promise<Response> {
+    let response = await fetch(url, options);
+    
+    // If we get a 401 and have a refresh token, try to refresh and retry
+    if (response.status === 401 && this.getStoredTokens()?.refresh) {
+      try {
+        await this.refreshToken();
+        // Retry the request with the new token
+        const newOptions = { ...options };
+        if (newOptions.headers) {
+          const tokens = this.getStoredTokens();
+          if (tokens?.access) {
+            // Update the Authorization header with the new token
+            (newOptions.headers as Record<string, string>).Authorization = `Bearer ${tokens.access}`;
+          }
+        }
+        response = await fetch(url, newOptions);
+      } catch (refreshError) {
+        // If refresh fails, clear tokens and rethrow
+        this.clearTokens();
+        throw refreshError;
+      }
+    }
+    
+    return response;
   }
 
   // Helper method to format SQL strings
@@ -457,7 +533,7 @@ class ApiService {
       url += `?${searchParams}`;
     }
 
-    const response = await fetch(url, {
+    const response = await this.fetchWithAuth(url, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch playlists');
@@ -467,7 +543,7 @@ class ApiService {
   }
 
   async getPlaylist(id: number): Promise<Playlist> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/playlists/${id}/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch playlist');
@@ -475,7 +551,7 @@ class ApiService {
   }
 
   async createPlaylist(data: FormData): Promise<Playlist> {
-    const response = await fetch(`${API_BASE_URL}/playlists/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/playlists/`, {
       method: 'POST',
       headers: this.getMultipartHeaders(true),
       body: data,
@@ -486,7 +562,7 @@ class ApiService {
   }
 
   async updatePlaylist(id: number, data: FormData): Promise<Playlist> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/playlists/${id}/`, {
       method: 'PATCH',
       headers: this.getMultipartHeaders(true),
       body: data,
@@ -497,7 +573,7 @@ class ApiService {
   }
 
   async deletePlaylist(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${id}/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/playlists/${id}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -506,7 +582,7 @@ class ApiService {
   }
 
   async addSongToPlaylist(playlistId: number, songId: number): Promise<PlaylistSong> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/add-song/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}/add-song/`, {
       method: 'POST',
       headers: this.getHeaders(true),
       body: JSON.stringify({ song_id: songId }),
@@ -517,7 +593,7 @@ class ApiService {
   }
 
   async removeSongFromPlaylist(playlistId: number, songId: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/playlists/${playlistId}/remove-song/${songId}/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/playlists/${playlistId}/remove-song/${songId}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -527,7 +603,7 @@ class ApiService {
 
   // ==================== FAVORITE METHODS ====================
   async getFavorites(): Promise<Favorite[]> {
-    const response = await fetch(`${API_BASE_URL}/favorites/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/favorites/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch favorites');
@@ -537,7 +613,7 @@ class ApiService {
   }
 
   async addFavorite(itemType: string, itemId: number): Promise<Favorite> {
-    const response = await fetch(`${API_BASE_URL}/favorites/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/favorites/`, {
       method: 'POST',
       headers: this.getHeaders(true),
       body: JSON.stringify({ item_type: itemType, item_id: itemId }),
@@ -548,7 +624,7 @@ class ApiService {
   }
 
   async removeFavorite(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/favorites/${id}/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/favorites/${id}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -558,7 +634,7 @@ class ApiService {
 
   // ==================== HISTORY METHODS ====================
   async getListeningHistory(): Promise<ListeningHistory[]> {
-    const response = await fetch(`${API_BASE_URL}/songs/history/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/songs/history/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch listening history');
@@ -569,7 +645,7 @@ class ApiService {
 
   // ==================== COMMENT METHODS ====================
   async getComments(itemType: string, itemId: number): Promise<Comment[]> {
-    const response = await fetch(`${API_BASE_URL}/comments/?item_type=${itemType}&item_id=${itemId}`);
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/comments/?item_type=${itemType}&item_id=${itemId}`);
     if (!response.ok) throw new Error('Failed to fetch comments');
     
     const data = await response.json();
@@ -577,7 +653,7 @@ class ApiService {
   }
 
   async createComment(itemType: string, itemId: number, content: string): Promise<Comment> {
-    const response = await fetch(`${API_BASE_URL}/comments/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/comments/`, {
       method: 'POST',
       headers: this.getHeaders(true),
       body: JSON.stringify({ item_type: itemType, item_id: itemId, content }),
@@ -589,7 +665,7 @@ class ApiService {
 
   // ==================== AI METHODS ====================
   async getAIPrompts(): Promise<AIPrompt[]> {
-    const response = await fetch(`${API_BASE_URL}/ai-prompts/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/songs/ai-prompts/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch AI prompts');
@@ -599,13 +675,41 @@ class ApiService {
   }
 
   async createAIPrompt(promptText: string): Promise<AIPrompt> {
-    const response = await fetch(`${API_BASE_URL}/ai-prompts/`, {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/songs/ai-prompts/`, {
       method: 'POST',
       headers: this.getHeaders(true),
       body: JSON.stringify({ prompt_text: promptText }),
     });
 
     if (!response.ok) throw new Error('Failed to create AI prompt');
+    return response.json();
+  }
+
+  // ==================== MELO AI METHODS ====================
+  async queryAI(query: string): Promise<AIQueryResponse> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/ai/query/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) throw new Error('Failed to process AI query');
+    return response.json();
+  }
+
+  async getAIRecommendations(): Promise<AIRecommendationsResponse> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/ai/recommendations/`, {
+      headers: this.getHeaders(true),
+    });
+    if (!response.ok) throw new Error('Failed to fetch AI recommendations');
+    return response.json();
+  }
+
+  async getAIInsights(): Promise<AIInsightsResponse> {
+    const response = await this.fetchWithAuth(`${API_BASE_URL}/ai/insights/`, {
+      headers: this.getHeaders(true),
+    });
+    if (!response.ok) throw new Error('Failed to fetch AI insights');
     return response.json();
   }
 

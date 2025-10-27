@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "users",
     "songs",
+    "meloai",  # Add the AI assistant app
     'rest_framework',  # Add this
     'corsheaders',     # Add this
     'rest_framework_simplejwt',  # Add this

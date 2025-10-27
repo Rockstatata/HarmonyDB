@@ -30,9 +30,17 @@ const MyMusic = () => {
     release_date: ''
   });
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user && !apiService.isAuthenticated()) {
+      navigate('/auth/login');
+      return;
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     const fetchMyMusic = async () => {
-      if (!user) return;
+      if (!user || !apiService.isAuthenticated()) return;
       
       try {
         const [userSongs, userAlbums, allGenres] = await Promise.all([
@@ -46,6 +54,10 @@ const MyMusic = () => {
         setGenres(allGenres);
       } catch (error) {
         console.error('Error fetching my music:', error);
+        // If we get an authentication error, the user might need to log in again
+        if (error instanceof Error && error.message.includes('401')) {
+          alert('Your session has expired. Please log in again.');
+        }
       } finally {
         setLoading(false);
       }
@@ -118,6 +130,12 @@ const MyMusic = () => {
       return;
     }
 
+    // Check if user is authenticated
+    if (!user || !apiService.isAuthenticated()) {
+      alert('You must be logged in to create an album');
+      return;
+    }
+
     try {
       const formData = new FormData();
       formData.append('title', albumForm.title);
@@ -134,7 +152,7 @@ const MyMusic = () => {
       });
     } catch (error) {
       console.error('Error creating album:', error);
-      alert('Failed to create album');
+      alert('Failed to create album. Please try logging in again.');
     }
   };
 

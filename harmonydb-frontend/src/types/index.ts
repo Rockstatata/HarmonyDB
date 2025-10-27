@@ -11,6 +11,8 @@ export interface User {
   birth_date?: string;
   created_at?: string;
   updated_at?: string;
+  songs_count?: number; // For artist statistics
+  albums_count?: number; // For artist statistics
 }
 
 export interface Song {

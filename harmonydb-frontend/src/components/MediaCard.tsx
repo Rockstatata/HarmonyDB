@@ -95,7 +95,7 @@ export default function MediaCard({
     <div
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className={`group w-64 sm:w-64 md:w-72 rounded-3xl overflow-hidden shadow-2xl bg-transparent cursor-pointer border border-white/10 backdrop-blur-sm flex flex-col h-[320px] transform transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${className}`}
+      className={`group w-48 sm:w-48 md:w-64 rounded-3xl overflow-hidden shadow-2xl bg-transparent cursor-pointer border border-white/10 backdrop-blur-sm flex flex-col h-[320px] transform transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${className}`}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       style={{ borderRadius: 24}}

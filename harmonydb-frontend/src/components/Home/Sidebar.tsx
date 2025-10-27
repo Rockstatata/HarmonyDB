@@ -1,5 +1,5 @@
 import { NavLink, Link } from "react-router-dom";
-import { Home, Library, Heart, Clock, Brain, Music } from "lucide-react";
+import { Home, Library, Heart, Clock, Brain, Music, Users } from "lucide-react";
 import { useAuth } from "../../context/authContext";
 import Logo from "../../assets/images/logo.png";
 
@@ -10,9 +10,10 @@ export default function Sidebar() {
   const baseNavItems = [
     { to: "/home", label: "Home", icon: <Home /> },
     { to: "/home/library", label: "Your Library", icon: <Library /> },
+    { to: "/home/artists", label: "Artists", icon: <Users /> },
     { to: "/home/favorites", label: "Liked Songs", icon: <Heart /> },
     { to: "/home/history", label: "Recently Played", icon: <Clock /> },
-    { to: "/home/ai", label: "AI Assistant", icon: <Brain /> }
+    { to: "/home/ai", label: "Melo AI", icon: <Brain /> }
   ];
 
   // Artist-specific items
