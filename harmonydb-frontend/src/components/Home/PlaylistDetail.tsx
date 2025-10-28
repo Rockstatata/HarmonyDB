@@ -18,6 +18,8 @@ const PlaylistDetail = () => {
   const [availableSongs, setAvailableSongs] = useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [addingSong, setAddingSong] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchPlaylistAndSongs = async () => {
@@ -91,6 +93,20 @@ const PlaylistDetail = () => {
       alert('Failed to add song to playlist. It may already be in the playlist.');
     } finally {
       setAddingSong(false);
+    }
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (!playlist || !user || playlist.user !== user.id) return;
+
+    setDeleting(true);
+    try {
+      await apiService.deletePlaylist(playlist.id);
+      navigate('/home/library');
+    } catch (error) {
+      console.error('Error deleting playlist:', error);
+      alert('Failed to delete playlist');
+      setDeleting(false);
     }
   };
 
@@ -186,13 +202,23 @@ const PlaylistDetail = () => {
               )}
               
               {isOwner && (
-                <button
-                  onClick={() => setShowAddSongs(true)}
-                  className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
-                >
-                  <Plus size={20} className="text-white" />
-                  <span className="text-white">Add Songs</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowAddSongs(true)}
+                    className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <Plus size={20} className="text-white" />
+                    <span className="text-white">Add Songs</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={20} className="text-white" />
+                    <span className="text-white">Delete Playlist</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -336,6 +362,38 @@ const PlaylistDetail = () => {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Playlist Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md">
+            <div className="text-center">
+              <Trash2 className="mx-auto text-red-500 mb-4" size={48} />
+              <h2 className="text-xl font-bold text-white mb-2">Delete Playlist</h2>
+              <p className="text-gray-400 mb-6">
+                Are you sure you want to delete "{playlist.name}"? This action cannot be undone.
+              </p>
+              
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white transition-colors"
+                  disabled={deleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeletePlaylist}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white transition-colors"
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

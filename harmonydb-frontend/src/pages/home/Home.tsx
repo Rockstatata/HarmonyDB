@@ -14,6 +14,7 @@ import Search from '../../components/Home/Search';
 import AlbumDetail from '../../components/Home/AlbumDetail';
 import Artists from '../../components/Home/Artists';
 import ArtistDetail from '../../components/Home/ArtistDetail';
+import Analytics from '../../components/Home/Analytics';
 import { useAuth } from '../../context/authContext';
 
 const Home = () => {
@@ -48,6 +49,7 @@ const Home = () => {
             <Route path="/playlist/:id" element={<PlaylistDetail />} />
             <Route path="/artists" element={<Artists />} />
             <Route path="/artist/:id" element={<ArtistDetail />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/my-music" element={
               <ArtistRoute>
                 <MyMusic />

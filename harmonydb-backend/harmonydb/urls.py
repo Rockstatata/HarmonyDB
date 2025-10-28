@@ -26,5 +26,6 @@ urlpatterns = [
     path("api/songs/", include("songs.urls")),
     path("api/albums/", include("songs.urls_albums")),
     path("api/playlists/", include("songs.urls_playlists")),
+    path("api/analytics/", include("songs.urls_analytics")),  # Advanced SQL Analytics
     path("api/ai/", include("meloai.urls")),  # Add AI endpoints
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

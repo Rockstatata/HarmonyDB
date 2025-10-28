@@ -11,12 +11,13 @@ class SongSerializer(serializers.ModelSerializer):
     album_title = serializers.CharField(source="album.title", read_only=True)
     genre_name = serializers.CharField(source="genre.name", read_only=True)
     audio_url = serializers.SerializerMethodField()
+    cover_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Song
         fields = [
             'id', 'title', 'artist', 'artist_name', 'album', 'album_title', 
-            'genre', 'genre_name', 'cover_image', 'audio_file', 'audio_url',
+            'genre', 'genre_name', 'cover_image', 'cover_image_url', 'audio_file', 'audio_url',
             'release_date', 'duration', 'play_count', 'upload_date', 'approved'
         ]
         read_only_fields = ['artist', 'play_count', 'upload_date']
@@ -25,6 +26,12 @@ class SongSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request:
             return request.build_absolute_uri(f"/api/songs/stream/{obj.id}/")
+        return None
+
+    def get_cover_image_url(self, obj):
+        request = self.context.get("request")
+        if request and obj.cover_image:
+            return request.build_absolute_uri(obj.cover_image.url)
         return None
 
     def create(self, validated_data):

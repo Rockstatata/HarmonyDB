@@ -39,7 +39,7 @@ class GroqAIService:
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "llama3-8b-8192",  # or "mixtral-8x7b-32768"
+                    "model": "llama-3.3-70b-versatile",  # or "mixtral-8x7b-32768"
                     "messages": [
                         {
                             "role": "system",

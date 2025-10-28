@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, Music, User as UserIcon, Disc, Filter, X, PlayCircle } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
@@ -79,15 +79,80 @@ const Search: React.FC = () => {
     
     setLoading(true);
     try {
-      // Base search parameters
+      // Use advanced search endpoint when filters are applied
+      const hasAdvancedFilters = filters.genre || filters.duration !== 'all' || 
+                                  filters.year || filters.sortBy !== 'relevance';
+
+      if (hasAdvancedFilters && filters.contentType === 'songs') {
+        // Use the advanced analytics search endpoint
+        // Demonstrates: LIKE, IN, BETWEEN, Complex WHERE with AND/OR
+        const advancedFilters: Record<string, string | number | number[]> = {};
+        
+        if (filters.genre) {
+          // Get genre ID for IN clause
+          const genreResponse = await apiService.getGenres();
+          const genreList = Array.isArray(genreResponse) ? genreResponse : (genreResponse as { results?: { name: string; id: number }[] }).results || [];
+          const selectedGenre = genreList.find((g: { name: string; id: number }) => g.name === filters.genre);
+          if (selectedGenre) {
+            advancedFilters.genres = [selectedGenre.id];
+          }
+        }
+        
+        if (filters.duration !== 'all') {
+          // BETWEEN clause for duration
+          if (filters.duration === 'short') {
+            advancedFilters.min_duration = 0;
+            advancedFilters.max_duration = 180;
+          } else if (filters.duration === 'medium') {
+            advancedFilters.min_duration = 180;
+            advancedFilters.max_duration = 360;
+          } else if (filters.duration === 'long') {
+            advancedFilters.min_duration = 360;
+            advancedFilters.max_duration = 10000;
+          }
+        }
+        
+        if (filters.year) {
+          // Date BETWEEN for year range
+          advancedFilters.start_date = `${filters.year}-01-01`;
+          advancedFilters.end_date = `${filters.year}-12-31`;
+        }
+        
+        // Call advanced search endpoint
+        const response = await fetch('http://localhost:8000/api/analytics/search/advanced/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          },
+          body: JSON.stringify({
+            search_term: searchQuery,
+            filters: advancedFilters
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          setResults({
+            songs: data.data || [],
+            albums: [],
+            playlists: [],
+            users: []
+          });
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // Standard search with basic filters
       const baseParams: Record<string, string> = { search: searchQuery };
       
-      // Add genre filter (convert name to search parameter)
+      // Add genre filter
       if (filters.genre) {
         baseParams.genre = filters.genre;
       }
       
-      // Add year filter for songs and albums (filter by release_date year)
+      // Add year filter
       if (filters.year) {
         baseParams.year = filters.year;
       }

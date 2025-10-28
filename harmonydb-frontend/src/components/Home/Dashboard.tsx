@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Heart, MoreHorizontal } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
 import { useAuth } from '../../context/authContext';
@@ -11,6 +11,7 @@ const Dashboard = () => {
   const { playSong } = usePlayer();
   const [recentSongs, setRecentSongs] = useState<Song[]>([]);
   const [popularSongs, setPopularSongs] = useState<Song[]>([]);
+  const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
   const [recentAlbums, setRecentAlbums] = useState<Album[]>([]);
   const [featuredPlaylists, setFeaturedPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +19,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        // Fetch basic data
         const [songs, albums, playlists] = await Promise.all([
           apiService.getSongs(),
           apiService.getAlbums(),
@@ -28,6 +30,18 @@ const Dashboard = () => {
         setPopularSongs(songs.sort((a, b) => b.play_count - a.play_count).slice(0, 6));
         setRecentAlbums(albums.slice(0, 6));
         setFeaturedPlaylists(playlists.filter(p => p.is_public).slice(0, 6));
+
+        // Fetch trending songs from analytics
+        // Demonstrates: Date filtering, Complex scoring, F() expressions
+        try {
+          const trendingResponse = await fetch('http://localhost:8000/api/analytics/songs/trending/?days=7&limit=6');
+          const trendingData = await trendingResponse.json();
+          if (trendingData.success) {
+            setTrendingSongs(trendingData.data);
+          }
+        } catch (error) {
+          console.error('Error fetching trending songs:', error);
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -40,6 +54,19 @@ const Dashboard = () => {
 
   const handlePlaySong = (song: Song) => {
     playSong(song, popularSongs);
+  };
+
+  const handlePlayPlaylist = async (playlist: Playlist) => {
+    try {
+      // Fetch the full playlist with songs
+      const fullPlaylist = await apiService.getPlaylist(playlist.id);
+      if (fullPlaylist.songs.length > 0) {
+        const songs = fullPlaylist.songs.map(ps => ps.song);
+        playSong(songs[0], songs);
+      }
+    } catch (error) {
+      console.error('Error playing playlist:', error);
+    }
   };
 
   const getGreeting = () => {
@@ -64,11 +91,6 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold text-text-primary font-poppins">
           {getGreeting()}, {user?.display_name || user?.username}!
         </h1>
-        <div className="flex items-center space-x-4">
-          <button className="p-2 bg-surface/50 hover:bg-surface rounded-full transition-colors">
-            <MoreHorizontal className="text-text-primary" size={20} />
-          </button>
-        </div>
       </div>
 
       {/* Jump Back In Section */}
@@ -133,6 +155,48 @@ const Dashboard = () => {
         </div>
       </section>
 
+      {/* Trending Songs - Uses Analytics API */}
+      {trendingSongs.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary font-poppins"> Trending This Week</h2>
+              <p className="text-xs text-text-muted mt-1 font-poppins">
+                SQL: Date Filtering, Complex Scoring, Multiple Aggregations
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trendingSongs.map((song, index) => (
+              <div
+                key={song.id}
+                className="glass hover:bg-surface/30 rounded-lg p-4 group cursor-pointer transition-all duration-300 relative overflow-hidden"
+                onClick={() => handlePlaySong(song)}
+              >
+                <div className="absolute top-2 left-2 w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-bold text-sm z-10">
+                  #{index + 1}
+                </div>
+                <div className="relative mb-4">
+                  <img
+                    src={song.cover_image}
+                    alt={song.title}
+                    className="w-full aspect-square rounded-lg object-cover"
+                  />
+                  <button className="absolute bottom-2 right-2 w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                    <Play className="text-white ml-0.5" size={20} />
+                  </button>
+                </div>
+                <div>
+                  <h3 className="text-text-primary font-semibold mb-1 truncate font-poppins">{song.title}</h3>
+                  <p className="text-text-muted text-sm truncate font-poppins">{song.artist_name}</p>
+                  <p className="text-primary text-xs mt-1 font-bold font-poppins">Trending 📈</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Recent Albums */}
       <section>
         <div className="flex items-center justify-between mb-6">
@@ -169,8 +233,8 @@ const Dashboard = () => {
       {/* Featured Playlists */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Made for you</h2>
-          <button className="text-gray-400 hover:text-white text-sm font-medium">
+          <h2 className="text-2xl font-bold text-text-primary font-poppins">Made for you</h2>
+          <button className="text-text-muted hover:text-text-primary text-sm font-medium font-poppins">
             Show all
           </button>
         </div>
@@ -178,7 +242,8 @@ const Dashboard = () => {
           {featuredPlaylists.map((playlist) => (
             <div
               key={playlist.id}
-              className="bg-gray-900/40 hover:bg-gray-900/60 rounded-lg p-4 group cursor-pointer transition-all duration-300"
+              className="glass hover:bg-surface/30 rounded-lg p-4 group cursor-pointer transition-all duration-300"
+              onClick={() => handlePlayPlaylist(playlist)}
             >
               <div className="relative mb-3">
                 <img
@@ -186,13 +251,13 @@ const Dashboard = () => {
                   alt={playlist.name}
                   className="w-full aspect-square rounded-lg object-cover"
                 />
-                <button className="absolute bottom-2 right-2 w-10 h-10 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                  <Play className="text-black ml-0.5" size={16} />
+                <button className="absolute bottom-2 right-2 w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg">
+                  <Play className="text-white ml-0.5" size={16} />
                 </button>
               </div>
               <div>
-                <h3 className="text-white font-medium text-sm mb-1 truncate">{playlist.name}</h3>
-                <p className="text-gray-400 text-xs truncate">
+                <h3 className="text-text-primary font-semibold mb-1 truncate font-poppins">{playlist.name}</h3>
+                <p className="text-text-muted text-sm truncate font-poppins">
                   {playlist.songs_count} songs • {playlist.user_name}
                 </p>
               </div>
