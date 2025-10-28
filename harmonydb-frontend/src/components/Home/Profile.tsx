@@ -158,7 +158,7 @@ const Profile = () => {
             {isEditing && (
               <button
                 onClick={handleCameraClick}
-                className="absolute bottom-0 right-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center hover:bg-green-700 transition-colors"
+                className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center hover:bg-primary/80 transition-colors"
               >
                 <Camera size={16} className="text-white" />
               </button>
@@ -278,7 +278,7 @@ const Profile = () => {
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Email Status</label>
             <div className="flex items-center space-x-2">
-              <div className={`w-3 h-3 rounded-full ${user.email_verified ? 'bg-green-500' : 'bg-red-500'}`} />
+              <div className={`w-3 h-3 rounded-full ${user.email_verified ? 'bg-primary' : 'bg-accent'}`} />
               <span className="text-white">
                 {user.email_verified ? 'Verified' : 'Not Verified'}
               </span>
@@ -292,7 +292,7 @@ const Profile = () => {
             <button
               onClick={handleSaveProfile}
               disabled={loading}
-              className="flex items-center space-x-2 px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-6 py-2 bg-primary hover:bg-primary/80 disabled:bg-surface disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               <Save size={16} className="text-white" />
               <span className="text-white">{loading ? 'Saving...' : 'Save Changes'}</span>

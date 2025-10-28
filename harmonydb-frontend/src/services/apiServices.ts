@@ -603,28 +603,36 @@ class ApiService {
 
   // ==================== FAVORITE METHODS ====================
   async getFavorites(): Promise<Favorite[]> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/favorites/`, {
+    const { response, data } = await this.fetchWithDebug(`${API_BASE_URL}/songs/favorites/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch favorites');
     
-    const data = await response.json();
-    return data.results || data;
+    if (data) {
+      return (data as { results?: Favorite[] }).results || (data as Favorite[]);
+    }
+    
+    // Fallback: parse response manually if data extraction failed
+    const rawData = await response.json();
+    const cleanedData = this.extractSQLDebugInfo(rawData, response.headers);
+    return (cleanedData as { results?: Favorite[] }).results || (cleanedData as Favorite[]);
   }
 
   async addFavorite(itemType: string, itemId: number): Promise<Favorite> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/favorites/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/favorites/`, {
       method: 'POST',
       headers: this.getHeaders(true),
       body: JSON.stringify({ item_type: itemType, item_id: itemId }),
     });
 
     if (!response.ok) throw new Error('Failed to add favorite');
-    return response.json();
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as Favorite;
   }
 
   async removeFavorite(id: number): Promise<void> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/favorites/${id}/`, {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/favorites/${id}/`, {
       method: 'DELETE',
       headers: this.getHeaders(true),
     });
@@ -632,15 +640,71 @@ class ApiService {
     if (!response.ok) throw new Error('Failed to remove favorite');
   }
 
+  async toggleFavorite(itemType: string, itemId: number): Promise<{ favorited: boolean; favorite?: Favorite; message: string }> {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/favorites/toggle/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ item_type: itemType, item_id: itemId }),
+    });
+
+    if (!response.ok) throw new Error('Failed to toggle favorite');
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as { favorited: boolean; favorite?: Favorite; message: string };
+  }
+
+  async checkIfFavorited(itemType: string, itemId: number): Promise<boolean> {
+    try {
+      const favorites = await this.getFavorites();
+      return favorites.some(fav => fav.item_type === itemType && fav.item_id === itemId);
+    } catch (error) {
+      console.error('Error checking if favorited:', error);
+      return false;
+    }
+  }
+
   // ==================== HISTORY METHODS ====================
   async getListeningHistory(): Promise<ListeningHistory[]> {
-    const response = await this.fetchWithAuth(`${API_BASE_URL}/songs/history/`, {
+    const { response, data } = await this.fetchWithDebug(`${API_BASE_URL}/songs/history/`, {
       headers: this.getHeaders(true),
     });
     if (!response.ok) throw new Error('Failed to fetch listening history');
     
-    const data = await response.json();
-    return data.results || data;
+    if (data) {
+      return (data as { results?: ListeningHistory[] }).results || (data as ListeningHistory[]);
+    }
+    
+    // Fallback: parse response manually if data extraction failed
+    const rawData = await response.json();
+    const cleanedData = this.extractSQLDebugInfo(rawData, response.headers);
+    return (cleanedData as { results?: ListeningHistory[] }).results || (cleanedData as ListeningHistory[]);
+  }
+
+  async addToHistory(songId: number): Promise<ListeningHistory> {
+    const { response } = await this.fetchWithDebug(`${API_BASE_URL}/songs/history/add/`, {
+      method: 'POST',
+      headers: this.getHeaders(true),
+      body: JSON.stringify({ song_id: songId }),
+    });
+
+    if (!response.ok) throw new Error('Failed to add to history');
+    
+    const rawData = await response.json();
+    return this.extractSQLDebugInfo(rawData, response.headers) as ListeningHistory;
+  }
+
+  async getRecentHistory(limit: number = 10): Promise<ListeningHistory[]> {
+    const history = await this.getListeningHistory();
+    // Remove duplicates (keep most recent) and limit results
+    const uniqueHistory = history.reduce((acc: ListeningHistory[], current) => {
+      const existing = acc.find(item => item.song?.id === current.song?.id);
+      if (!existing) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
+    
+    return uniqueHistory.slice(0, limit);
   }
 
   // ==================== COMMENT METHODS ====================

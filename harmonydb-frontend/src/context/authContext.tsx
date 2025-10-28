@@ -48,8 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     try {
-      const result = await apiService.login({ username, password });
-      setUser(result.user);
+      await apiService.login({ username, password });
+      // Fetch complete user data after login to get profile picture and all details
+      const userData = await apiService.getMe();
+      setUser(userData);
     } finally {
       setIsLoading(false);
     }

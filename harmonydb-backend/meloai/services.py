@@ -82,10 +82,18 @@ class GroqAIService:
         - "Find songs added in last 30 days" -> {{"intent": "search_songs", "entities": {{"date_range": "last_30_days"}}, "dbms_concept": "date_filtering"}}
         - "Search songs with title containing Love" -> {{"intent": "search_songs", "entities": {{"song_title_pattern": "Love"}}, "dbms_concept": "text_search"}}
         - "Show total songs by each artist" -> {{"intent": "get_grouped_aggregation", "entities": {{"group_by": "artist", "aggregation_type": "count"}}, "dbms_concept": "group_by_aggregation"}}
+        - "Show all my favorite songs" -> {{"intent": "get_user_favorites", "entities": {{"favorite_type": "songs"}}, "dbms_concept": "user_specific_query"}}
+        - "Show all my favorite artists" -> {{"intent": "get_user_favorites", "entities": {{"favorite_type": "artists"}}, "dbms_concept": "user_specific_query"}}
+        - "Show all my favorite albums" -> {{"intent": "get_user_favorites", "entities": {{"favorite_type": "albums"}}, "dbms_concept": "user_specific_query"}}
+        - "Show my listening history" -> {{"intent": "get_user_history", "entities": {{}}, "dbms_concept": "user_specific_query"}}
+        - "My most played songs" -> {{"intent": "get_user_stats", "entities": {{"stat_type": "most_played"}}, "dbms_concept": "user_specific_query"}}
+        - "Songs I played recently" -> {{"intent": "get_user_history", "entities": {{"time_range": "recent"}}, "dbms_concept": "user_specific_query"}}
+        - "Albums released this year" -> {{"intent": "search_albums", "entities": {{"year": "current_year"}}, "dbms_concept": "date_filtering"}}
+        - "Artists from genre Rock" -> {{"intent": "search_artists", "entities": {{"genre": "rock"}}, "dbms_concept": "basic_query"}}
 
         Parse this query and return ONLY valid JSON with this exact structure:
         {{
-            "intent": "search_songs|search_albums|search_artists|get_aggregation|get_joined_data|get_subquery_result|get_grouped_aggregation|get_recommendations|get_stats|create_view|demonstrate_transaction",
+            "intent": "search_songs|search_albums|search_artists|get_aggregation|get_joined_data|get_subquery_result|get_grouped_aggregation|get_recommendations|get_stats|get_user_favorites|get_user_history|get_user_stats|create_view|demonstrate_transaction",
             "entities": {{
                 "artist_name": "extracted artist name or null",
                 "song_title": "extracted song title or null",
@@ -93,7 +101,7 @@ class GroqAIService:
                 "album_title": "extracted album title or null",
                 "genre": "extracted genre or null",
                 "year": "extracted year or null",
-                "date_range": "last_30_days|last_year|after_2020|before_2010 or null",
+                "date_range": "last_30_days|last_year|after_2020|before_2010|current_year or null",
                 "play_count_filter": "high|medium|low or null",
                 "play_count_threshold": "numeric threshold or null",
                 "limit": "number for LIMIT clause or null",
@@ -103,9 +111,12 @@ class GroqAIService:
                 "group_by": "field to group by or null",
                 "join_type": "songs_albums|songs_artists|albums_artists|full_data or null",
                 "subquery_type": "max_songs_album|most_popular_artist|albums_with_many_songs or null",
-                "comparison_operator": "gt|lt|gte|lte|eq or null"
+                "comparison_operator": "gt|lt|gte|lte|eq or null",
+                "favorite_type": "songs|artists|albums or null",
+                "stat_type": "most_played|recently_added|top_genres or null",
+                "time_range": "recent|today|this_week|this_month or null"
             }},
-            "dbms_concept": "basic_query|aggregation|joins|subqueries|sorting_limiting|date_filtering|text_search|group_by_aggregation|normalization|transactions|indexing|views|triggers|constraints",
+            "dbms_concept": "basic_query|aggregation|joins|subqueries|sorting_limiting|date_filtering|text_search|group_by_aggregation|user_specific_query|normalization|transactions|indexing|views|triggers|constraints",
             "natural_response": "A brief response about what database operation will be performed"
         }}
         
@@ -167,7 +178,27 @@ class GroqAIService:
         query_lower = user_query.lower()
         
         # Enhanced intent detection for DBMS concepts
-        if any(word in query_lower for word in ['how many', 'count', 'total number', 'average', 'avg', 'maximum', 'minimum', 'sum']):
+        if any(word in query_lower for word in ['my favorite', 'my favourites', 'favorite songs', 'favorite artists', 'favorite albums', 'favourites']):
+            if 'songs' in query_lower or 'track' in query_lower:
+                intent = 'get_user_favorites'
+                entities['favorite_type'] = 'songs'
+            elif 'artists' in query_lower or 'singer' in query_lower:
+                intent = 'get_user_favorites' 
+                entities['favorite_type'] = 'artists'
+            elif 'albums' in query_lower or 'album' in query_lower:
+                intent = 'get_user_favorites'
+                entities['favorite_type'] = 'albums'
+            else:
+                intent = 'get_user_favorites'
+                entities['favorite_type'] = 'songs'  # default
+        elif any(word in query_lower for word in ['my history', 'listening history', 'recently played', 'songs i played']):
+            intent = 'get_user_history'
+            if 'recent' in query_lower or 'recently' in query_lower:
+                entities['time_range'] = 'recent'
+        elif any(word in query_lower for word in ['my most played', 'my top', 'my stats']):
+            intent = 'get_user_stats'
+            entities['stat_type'] = 'most_played'
+        elif any(word in query_lower for word in ['how many', 'count', 'total number', 'average', 'avg', 'maximum', 'minimum', 'sum']):
             if 'average' in query_lower or 'avg' in query_lower:
                 intent = 'get_aggregation'
                 aggregation_type = 'avg'
@@ -286,6 +317,8 @@ class GroqAIService:
             entities['date_range'] = 'after_2020'
         elif 'before 2010' in query_lower:
             entities['date_range'] = 'before_2010'
+        elif 'this year' in query_lower or 'current year' in query_lower:
+            entities['date_range'] = 'current_year'
         
         # Extract limits for top queries
         limit_match = re.search(r'(?:top|first|show me)\s+(\d+)', query_lower)
@@ -334,7 +367,9 @@ class GroqAIService:
         
         # Determine DBMS concept
         dbms_concept = 'basic_query'
-        if intent == 'get_aggregation':
+        if intent in ['get_user_favorites', 'get_user_history', 'get_user_stats']:
+            dbms_concept = 'user_specific_query'
+        elif intent == 'get_aggregation':
             dbms_concept = 'aggregation'
         elif intent == 'get_joined_data':
             dbms_concept = 'joins'
@@ -390,6 +425,15 @@ class MusicQueryProcessor:
             elif intent == 'get_grouped_aggregation':
                 results = MusicQueryProcessor._get_grouped_aggregation(entities, request)
                 result_type = 'grouped_aggregation'
+            elif intent == 'get_user_favorites':
+                results = MusicQueryProcessor._get_user_favorites(entities, user, request)
+                result_type = 'user_favorites'
+            elif intent == 'get_user_history':
+                results = MusicQueryProcessor._get_user_history(entities, user, request)
+                result_type = 'user_history'
+            elif intent == 'get_user_stats':
+                results = MusicQueryProcessor._get_user_stats_detailed(entities, user, request)
+                result_type = 'user_stats'
             elif intent == 'get_stats':
                 results = MusicQueryProcessor._get_user_stats(user)
                 result_type = 'stats'
@@ -466,6 +510,8 @@ class MusicQueryProcessor:
                 queryset = queryset.filter(release_date__year__gt=2020)
             elif entities['date_range'] == 'before_2010':
                 queryset = queryset.filter(release_date__year__lt=2010)
+            elif entities['date_range'] == 'current_year':
+                queryset = queryset.filter(release_date__year=now.year)
         
         # Play count filtering with threshold support
         if entities.get('play_count_filter'):
@@ -932,3 +978,248 @@ class MusicQueryProcessor:
                 return results
         
         return []
+    
+    @staticmethod
+    def _get_user_favorites(entities: dict, user, request=None) -> list:
+        """Get user's favorite songs, artists, or albums"""
+        favorite_type = entities.get('favorite_type', 'songs')
+        
+        if favorite_type == 'songs':
+            # Get user's favorite songs
+            favorites = user.favorites.filter(content_type__model='song').select_related('content_object__artist', 'content_object__album')
+            results = []
+            for favorite in favorites:
+                song = favorite.content_object
+                if song and song.approved:
+                    cover_url = None
+                    if song.cover_image and request:
+                        try:
+                            cover_url = request.build_absolute_uri(song.cover_image.url)
+                        except:
+                            cover_url = song.cover_image.url
+                    elif song.cover_image:
+                        cover_url = song.cover_image.url
+                    elif song.album and song.album.cover_image:
+                        try:
+                            cover_url = request.build_absolute_uri(song.album.cover_image.url) if request else song.album.cover_image.url
+                        except:
+                            cover_url = song.album.cover_image.url
+                    
+                    audio_url = None
+                    try:
+                        audio_url = request.build_absolute_uri(f"/api/songs/stream/{song.id}/") if request else f"/api/songs/stream/{song.id}/"
+                    except Exception:
+                        audio_url = f"/api/songs/stream/{song.id}/"
+                    
+                    results.append({
+                        'id': song.id,
+                        'title': song.title,
+                        'artist_name': song.artist.stage_name or song.artist.username,
+                        'artist_id': song.artist.id,
+                        'album': song.album.title if song.album else None,
+                        'album_id': song.album.id if song.album else None,
+                        'genre': song.genre.name if song.genre else None,
+                        'cover_image': cover_url,
+                        'audio_url': audio_url,
+                        'play_count': song.play_count,
+                        'duration': song.duration,
+                        'favorited_at': favorite.created_at.isoformat(),
+                        'is_favorite': True
+                    })
+            return results
+        
+        elif favorite_type == 'artists':
+            # Get user's favorite artists
+            favorites = user.favorites.filter(content_type__model='user').select_related('content_object')
+            results = []
+            for favorite in favorites:
+                artist = favorite.content_object
+                if artist and artist.role == 'artist':
+                    pic_url = None
+                    if artist.profile_picture and request:
+                        try:
+                            pic_url = request.build_absolute_uri(artist.profile_picture.url)
+                        except:
+                            pic_url = artist.profile_picture.url
+                    elif artist.profile_picture:
+                        pic_url = artist.profile_picture.url
+                    
+                    results.append({
+                        'id': artist.id,
+                        'username': artist.username,
+                        'stage_name': artist.stage_name or artist.username,
+                        'profile_picture': pic_url,
+                        'bio': artist.bio,
+                        'songs_count': artist.songs.filter(approved=True).count(),
+                        'albums_count': artist.albums.count(),
+                        'favorited_at': favorite.created_at.isoformat(),
+                        'is_favorite': True
+                    })
+            return results
+        
+        elif favorite_type == 'albums':
+            # Get user's favorite albums
+            favorites = user.favorites.filter(content_type__model='album').select_related('content_object__artist')
+            results = []
+            for favorite in favorites:
+                album = favorite.content_object
+                if album:
+                    cover_url = None
+                    if album.cover_image and request:
+                        try:
+                            cover_url = request.build_absolute_uri(album.cover_image.url)
+                        except:
+                            cover_url = album.cover_image.url
+                    elif album.cover_image:
+                        cover_url = album.cover_image.url
+                    
+                    results.append({
+                        'id': album.id,
+                        'title': album.title,
+                        'artist_name': album.artist.stage_name or album.artist.username,
+                        'artist_id': album.artist.id,
+                        'cover_image': cover_url,
+                        'release_date': album.release_date.isoformat() if album.release_date else None,
+                        'songs_count': album.songs.filter(approved=True).count(),
+                        'favorited_at': favorite.created_at.isoformat(),
+                        'is_favorite': True
+                    })
+            return results
+        
+        return []
+    
+    @staticmethod
+    def _get_user_history(entities: dict, user, request=None) -> list:
+        """Get user's listening history"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        queryset = user.listening_history.all().select_related('song__artist', 'song__album').order_by('-played_at')
+        
+        # Apply time range filter
+        time_range = entities.get('time_range')
+        if time_range:
+            now = timezone.now()
+            if time_range == 'today':
+                start_time = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                queryset = queryset.filter(played_at__gte=start_time)
+            elif time_range == 'this_week':
+                start_time = now - timedelta(days=7)
+                queryset = queryset.filter(played_at__gte=start_time)
+            elif time_range == 'this_month':
+                start_time = now - timedelta(days=30)
+                queryset = queryset.filter(played_at__gte=start_time)
+            elif time_range == 'recent':
+                queryset = queryset[:50]  # Last 50 plays
+        
+        history_entries = queryset[:100]  # Limit to 100 entries
+        
+        results = []
+        for entry in history_entries:
+            song = entry.song
+            if song and song.approved:
+                cover_url = None
+                if song.cover_image and request:
+                    try:
+                        cover_url = request.build_absolute_uri(song.cover_image.url)
+                    except:
+                        cover_url = song.cover_image.url
+                elif song.cover_image:
+                    cover_url = song.cover_image.url
+                elif song.album and song.album.cover_image:
+                    try:
+                        cover_url = request.build_absolute_uri(song.album.cover_image.url) if request else song.album.cover_image.url
+                    except:
+                        cover_url = song.album.cover_image.url
+                
+                audio_url = None
+                try:
+                    audio_url = request.build_absolute_uri(f"/api/songs/stream/{song.id}/") if request else f"/api/songs/stream/{song.id}/"
+                except Exception:
+                    audio_url = f"/api/songs/stream/{song.id}/"
+                
+                results.append({
+                    'id': song.id,
+                    'title': song.title,
+                    'artist_name': song.artist.stage_name or song.artist.username,
+                    'artist_id': song.artist.id,
+                    'album': song.album.title if song.album else None,
+                    'album_id': song.album.id if song.album else None,
+                    'genre': song.genre.name if song.genre else None,
+                    'cover_image': cover_url,
+                    'audio_url': audio_url,
+                    'play_count': song.play_count,
+                    'duration': song.duration,
+                    'played_at': entry.played_at.isoformat(),
+                    'listening_time': entry.listening_time
+                })
+        
+        return results
+    
+    @staticmethod
+    def _get_user_stats_detailed(entities: dict, user, request=None) -> dict:
+        """Get detailed user statistics"""
+        stat_type = entities.get('stat_type', 'most_played')
+        
+        if stat_type == 'most_played':
+            # Get user's most played songs
+            from django.db.models import Count
+            
+            # Get songs from listening history, ordered by frequency
+            most_played = user.listening_history.values('song').annotate(
+                play_count=Count('song')
+            ).order_by('-play_count')[:10]
+            
+            results = []
+            for item in most_played:
+                try:
+                    from songs.models import Song
+                    song = Song.objects.select_related('artist', 'album').get(id=item['song'])
+                    if song.approved:
+                        cover_url = None
+                        if song.cover_image and request:
+                            try:
+                                cover_url = request.build_absolute_uri(song.cover_image.url)
+                            except:
+                                cover_url = song.cover_image.url
+                        elif song.cover_image:
+                            cover_url = song.cover_image.url
+                        elif song.album and song.album.cover_image:
+                            try:
+                                cover_url = request.build_absolute_uri(song.album.cover_image.url) if request else song.album.cover_image.url
+                            except:
+                                cover_url = song.album.cover_image.url
+                        
+                        audio_url = None
+                        try:
+                            audio_url = request.build_absolute_uri(f"/api/songs/stream/{song.id}/") if request else f"/api/songs/stream/{song.id}/"
+                        except Exception:
+                            audio_url = f"/api/songs/stream/{song.id}/"
+                        
+                        results.append({
+                            'id': song.id,
+                            'title': song.title,
+                            'artist_name': song.artist.stage_name or song.artist.username,
+                            'artist_id': song.artist.id,
+                            'album': song.album.title if song.album else None,
+                            'album_id': song.album.id if song.album else None,
+                            'genre': song.genre.name if song.genre else None,
+                            'cover_image': cover_url,
+                            'audio_url': audio_url,
+                            'user_play_count': item['play_count'],
+                            'duration': song.duration
+                        })
+                except:
+                    continue
+            
+            return {
+                'stat_type': 'most_played',
+                'results': results,
+                'description': f'Your top {len(results)} most played songs'
+            }
+        
+        return {
+            'stat_type': stat_type,
+            'results': [],
+            'description': 'No statistics available'
+        }

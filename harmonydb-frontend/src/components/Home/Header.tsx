@@ -38,7 +38,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-dark/80 backdrop-blur-sm border-b border-accent/30 p-4 relative">
+    <header className="bg-dark/80 backdrop-blur-sm border-b border-accent/30 p-4 relative z-50">
       <div className="flex items-center justify-between w-full px-4">
         {/* Left Side - Can be used for additional elements */}
         <div className="w-64"></div>
@@ -62,13 +62,13 @@ const Header = () => {
 
         {/* Profile Section - Right Side */}
         {user && (
-          <div className="relative">
+          <div className="relative z-50">
             <button
               onClick={handleProfileClick}
               className="flex items-center space-x-3 hover:bg-gray-800/50 px-3 py-2 rounded-lg transition-colors"
             >
               {/* Profile Picture */}
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center overflow-hidden">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden">
                 {user.profile_picture ? (
                   <img
                     src={user.profile_picture}
@@ -99,11 +99,11 @@ const Header = () => {
 
             {/* Profile Dropdown */}
             {showProfileDropdown && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-[100]">
                 {/* Profile Header */}
                 <div className="p-4 border-b border-gray-700">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden">
                       {user.profile_picture ? (
                         <img
                           src={user.profile_picture}
@@ -162,7 +162,7 @@ const Header = () => {
       {/* Overlay to close dropdown when clicking outside */}
       {showProfileDropdown && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-[90]"
           onClick={() => setShowProfileDropdown(false)}
         />
       )}

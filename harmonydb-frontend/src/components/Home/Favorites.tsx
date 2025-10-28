@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, Play, Music, Disc, List } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
-import type { Favorite } from '../../types';
+import type { Favorite, Song, Album, Playlist } from '../../types';
 
 const Favorites = () => {
   const { playSong } = usePlayer();
@@ -25,9 +25,40 @@ const Favorites = () => {
     fetchFavorites();
   }, []);
 
+  // Helper function to get item name
+  const getItemName = (item: Song | Album | Playlist | undefined): string => {
+    if (!item) return 'Unknown Item';
+    if ('title' in item) return item.title;
+    if ('name' in item) return item.name;
+    return 'Unknown Item';
+  };
+
+  // Helper function to get item image
+  const getItemImage = (item: Song | Album | Playlist | undefined): string | undefined => {
+    if (!item) return undefined;
+    return item.cover_image;
+  };
+
+  // Helper function to get artist/creator name
+  const getItemCreator = (favorite: Favorite): string => {
+    if (!favorite.item) return 'Unknown';
+    
+    if (favorite.item_type === 'song' || favorite.item_type === 'album') {
+      const item = favorite.item as Song | Album;
+      return item.artist_name || 'Unknown Artist';
+    }
+    
+    if (favorite.item_type === 'playlist') {
+      const item = favorite.item as Playlist;
+      return item.user_name || 'Unknown User';
+    }
+    
+    return 'Unknown';
+  };
+
   const handlePlaySong = (favorite: Favorite) => {
-    if (favorite.item_type === 'song' && favorite.item) {
-      playSong(favorite.item);
+    if (favorite.item_type === 'song' && favorite.item && 'audio_url' in favorite.item) {
+      playSong(favorite.item as Song);
     }
   };
 
@@ -57,25 +88,25 @@ const Favorites = () => {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-96">
-        <div className="text-gray-400">Loading your favorites...</div>
+        <div className="text-text-secondary font-poppins">Loading your favorites...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 font-poppins">
       <div className="flex items-center space-x-4 mb-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+        <div className="w-16 h-16 bg-gradient-primary rounded-lg flex items-center justify-center">
           <Heart className="text-white" size={32} />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Liked Music</h1>
-          <p className="text-gray-400">{favorites.length} items</p>
+          <h1 className="text-3xl font-bold text-text-primary">Liked Music</h1>
+          <p className="text-text-secondary">{favorites.length} items</p>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex border-b border-gray-800 mb-6">
+      <div className="flex border-b border-border mb-6">
         {[
           { key: 'all', label: 'All', count: favorites.length },
           { key: 'songs', label: 'Songs', count: favorites.filter(f => f.item_type === 'song').length },
@@ -87,8 +118,8 @@ const Favorites = () => {
             onClick={() => setActiveTab(tab.key as 'all' | 'songs' | 'albums' | 'playlists')}
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === tab.key
-                ? 'text-white border-b-2 border-purple-500'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-text-primary border-b-2 border-primary'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             {tab.label} ({tab.count})
@@ -98,31 +129,31 @@ const Favorites = () => {
 
       {filteredFavorites.length === 0 ? (
         <div className="text-center py-12">
-          <Heart className="mx-auto text-gray-600 mb-4" size={64} />
-          <h3 className="text-xl font-semibold text-white mb-2">
+          <Heart className="mx-auto text-text-muted mb-4" size={64} />
+          <h3 className="text-xl font-semibold text-text-primary mb-2">
             {activeTab === 'all' ? 'No liked items yet' : `No liked ${activeTab} yet`}
           </h3>
-          <p className="text-gray-400">Like songs, albums, or playlists to see them here</p>
+          <p className="text-text-secondary">Like songs, albums, or playlists to see them here</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filteredFavorites.map((favorite, index) => (
             <div
               key={favorite.id}
-              className="flex items-center space-x-4 p-4 hover:bg-gray-800/50 rounded-lg group"
+              className="flex items-center space-x-4 p-4 hover:bg-surface/30 rounded-lg group transition-colors"
             >
-              <div className="w-8 text-gray-400 text-sm">{index + 1}</div>
+              <div className="w-8 text-text-muted text-sm">{index + 1}</div>
               
               {/* Item Icon/Image */}
-              <div className="w-12 h-12 rounded overflow-hidden bg-gray-700 flex items-center justify-center">
-                {favorite.item && favorite.item.cover_image ? (
+              <div className="w-12 h-12 rounded overflow-hidden bg-surface/50 flex items-center justify-center">
+                {getItemImage(favorite.item) ? (
                   <img
-                    src={favorite.item.cover_image}
-                    alt={favorite.item.title || favorite.item.name}
+                    src={getItemImage(favorite.item)}
+                    alt={getItemName(favorite.item)}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-gray-400">
+                  <div className="text-text-muted">
                     {getIconForType(favorite.item_type)}
                   </div>
                 )}
@@ -130,27 +161,27 @@ const Favorites = () => {
 
               {/* Item Details */}
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">
-                  {favorite.item ? (favorite.item.title || favorite.item.name) : 'Unknown Item'}
+                <p className="text-text-primary font-medium truncate">
+                  {getItemName(favorite.item)}
                 </p>
-                <p className="text-gray-400 text-sm truncate">
-                  {favorite.item_type === 'song' && favorite.item?.artist_name && (
-                    <>Artist: {favorite.item.artist_name}</>
+                <p className="text-text-secondary text-sm truncate">
+                  {favorite.item_type === 'song' && (
+                    <>Artist: {getItemCreator(favorite)}</>
                   )}
-                  {favorite.item_type === 'album' && favorite.item?.artist_name && (
-                    <>Album by {favorite.item.artist_name}</>
+                  {favorite.item_type === 'album' && (
+                    <>Album by {getItemCreator(favorite)}</>
                   )}
-                  {favorite.item_type === 'playlist' && favorite.item?.user_name && (
-                    <>Playlist by {favorite.item.user_name}</>
+                  {favorite.item_type === 'playlist' && (
+                    <>Playlist by {getItemCreator(favorite)}</>
                   )}
                   {!favorite.item && (
-                    <span className="text-red-400">Item no longer available</span>
+                    <span className="text-error">Item no longer available</span>
                   )}
                 </p>
               </div>
 
               {/* Added Date */}
-              <div className="text-gray-400 text-sm">
+              <div className="text-text-muted text-sm">
                 {new Date(favorite.created_at).toLocaleDateString()}
               </div>
 
@@ -159,14 +190,14 @@ const Favorites = () => {
                 {favorite.item_type === 'song' && favorite.item && (
                   <button
                     onClick={() => handlePlaySong(favorite)}
-                    className="p-2 bg-green-600 hover:bg-green-700 rounded-full transition-colors"
+                    className="p-2 bg-primary hover:bg-primary-600 rounded-full transition-colors"
                   >
                     <Play size={16} className="text-white ml-0.5" />
                   </button>
                 )}
                 <button
                   onClick={() => handleRemoveFavorite(favorite.id)}
-                  className="p-2 text-red-400 hover:text-red-300 transition-colors"
+                  className="p-2 text-error hover:text-error/80 transition-colors"
                   title="Remove from favorites"
                 >
                   <Heart size={16} className="fill-current" />

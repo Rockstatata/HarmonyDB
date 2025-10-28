@@ -1,6 +1,7 @@
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, Heart } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2 } from 'lucide-react';
 import { usePlayer } from '../../context/playerContext';
 import { useState, useRef } from 'react';
+import FavoriteButton from '../ui/FavoriteButton';
 
 const PlayerBar = () => {
   const { state, pauseSong, resumeSong, skipToNext, skipToPrevious, seekTo, setVolume, toggleShuffle, toggleRepeat } = usePlayer();
@@ -55,9 +56,12 @@ const PlayerBar = () => {
           <p className="text-text-primary text-sm font-medium truncate font-poppins">{state.currentSong.title}</p>
           <p className="text-text-muted text-xs truncate font-poppins">{state.currentSong.artist_name}</p>
         </div>
-        <button className="text-text-muted hover:text-primary transition-colors">
-          <Heart size={16} />
-        </button>
+        <FavoriteButton 
+          itemType="song" 
+          itemId={state.currentSong.id} 
+          size={16}
+          className="ml-2"
+        />
       </div>
 
       {/* Player Controls */}

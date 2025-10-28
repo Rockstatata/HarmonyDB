@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useRef } from 'react';
+import { apiService } from '../services/apiServices';
 import type { Song, PlayerState } from '../types';
 
 interface PlayerContextType {
@@ -28,17 +29,39 @@ type PlayerAction =
   | { type: 'SET_PLAYLIST'; payload: Song[] }
   | { type: 'UPDATE_TIME'; payload: { currentTime: number; duration: number } };
 
-const initialState: PlayerState = {
-  currentSong: null,
-  isPlaying: false,
-  volume: 1,
-  currentTime: 0,
-  duration: 0,
-  playlist: [],
-  currentIndex: -1,
-  shuffle: false,
-  repeat: 'none',
+const PLAYER_STORAGE_KEY = 'harmonydb_player_state';
+
+// Load initial state from localStorage
+const loadInitialState = (): PlayerState => {
+  try {
+    const stored = localStorage.getItem(PLAYER_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Return stored state but set isPlaying to false on reload
+      return {
+        ...parsed,
+        isPlaying: false,
+        currentTime: 0,
+      };
+    }
+  } catch (error) {
+    console.error('Error loading player state:', error);
+  }
+  
+  return {
+    currentSong: null,
+    isPlaying: false,
+    volume: 1,
+    currentTime: 0,
+    duration: 0,
+    playlist: [],
+    currentIndex: -1,
+    shuffle: false,
+    repeat: 'none',
+  };
 };
+
+const initialState: PlayerState = loadInitialState();
 
 function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
   switch (action.type) {
@@ -137,8 +160,32 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(playerReducer, initialState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Persist state to localStorage whenever it changes
+  React.useEffect(() => {
+    try {
+      const stateToSave = {
+        currentSong: state.currentSong,
+        volume: state.volume,
+        playlist: state.playlist,
+        currentIndex: state.currentIndex,
+        shuffle: state.shuffle,
+        repeat: state.repeat,
+      };
+      localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Error saving player state:', error);
+    }
+  }, [state.currentSong, state.volume, state.playlist, state.currentIndex, state.shuffle, state.repeat]);
+
   const playSong = (song: Song, playlist?: Song[]) => {
     dispatch({ type: 'PLAY_SONG', payload: { song, playlist } });
+    
+    // Add to listening history (fire and forget)
+    if (apiService.isAuthenticated()) {
+      apiService.addToHistory(song.id).catch(error => {
+        console.warn('Failed to add song to history:', error);
+      });
+    }
   };
 
   const pauseSong = () => {

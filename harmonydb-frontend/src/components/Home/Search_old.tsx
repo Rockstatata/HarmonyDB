@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search as SearchIcon, Music, User as UserIcon, Disc, Filter, X, PlayCircle } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
@@ -46,16 +46,6 @@ const Search: React.FC = () => {
     const initialQuery = searchParams.get('q') || '';
     setQuery(initialQuery);
     loadGenres();
-    
-    // Load initial content if there's a query parameter
-    if (initialQuery.trim()) {
-      // Need to call performSearch but avoid ESLint warning
-      const doSearch = async () => {
-        await performSearch(initialQuery);
-      };
-      doSearch();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const loadGenres = async () => {
@@ -71,122 +61,113 @@ const Search: React.FC = () => {
     }
   };
 
-  const performSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setResults({ songs: [], albums: [], playlists: [], users: [] });
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      // Base search parameters
-      const baseParams: Record<string, string> = { search: searchQuery };
-      
-      // Add genre filter (convert name to search parameter)
-      if (filters.genre) {
-        baseParams.genre = filters.genre;
-      }
-      
-      // Add year filter for songs and albums (filter by release_date year)
-      if (filters.year) {
-        baseParams.year = filters.year;
-      }
-      
-      // Add ordering/sorting
-      if (filters.sortBy !== 'relevance') {
-        if (filters.sortBy === 'recent') {
-          baseParams.ordering = '-upload_date';
-        } else if (filters.sortBy === 'popular') {
-          baseParams.ordering = '-play_count';
-        } else if (filters.sortBy === 'alphabetical') {
-          baseParams.ordering = 'title';
-        }
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!query.trim()) {
+        setResults({ songs: [], albums: [], playlists: [], users: [] });
+        setLoading(false);
+        return;
       }
 
-      let songs: Song[] = [];
-      let albums: Album[] = [];
-      let playlists: Playlist[] = [];
-      let users: User[] = [];
-
-      // Fetch songs with duration filtering
-      if (filters.contentType === 'all' || filters.contentType === 'songs') {
-        const songParams = { ...baseParams };
+      setLoading(true);
+      try {
+        // Base search parameters
+        const baseParams: Record<string, string> = { search: query };
         
-        // Add duration filtering for songs only
-        if (filters.duration !== 'all') {
-          if (filters.duration === 'short') {
-            songParams.duration_max = '180';
-          } else if (filters.duration === 'medium') {
-            songParams.duration_min = '180';
-            songParams.duration_max = '360';
-          } else if (filters.duration === 'long') {
-            songParams.duration_min = '360';
+        // Add genre filter (convert name to search parameter)
+        if (filters.genre) {
+          baseParams.genre = filters.genre;
+        }
+        
+        // Add year filter for songs and albums (filter by release_date year)
+        if (filters.year) {
+          baseParams.year = filters.year;
+        }
+        
+        // Add ordering/sorting
+        if (filters.sortBy !== 'relevance') {
+          if (filters.sortBy === 'recent') {
+            baseParams.ordering = '-upload_date';
+          } else if (filters.sortBy === 'popular') {
+            baseParams.ordering = '-play_count';
+          } else if (filters.sortBy === 'alphabetical') {
+            baseParams.ordering = 'title';
+          }
+        }
+
+        let songs: Song[] = [];
+        let albums: Album[] = [];
+        let playlists: Playlist[] = [];
+        let users: User[] = [];
+
+        // Fetch songs with duration filtering
+        if (filters.contentType === 'all' || filters.contentType === 'songs') {
+          const songParams = { ...baseParams };
+          
+          // Add duration filtering for songs only
+          if (filters.duration !== 'all') {
+            if (filters.duration === 'short') {
+              songParams.duration_max = '180';
+            } else if (filters.duration === 'medium') {
+              songParams.duration_min = '180';
+              songParams.duration_max = '360';
+            } else if (filters.duration === 'long') {
+              songParams.duration_min = '360';
+            }
+          }
+          
+          songs = await apiService.getSongs(songParams);
+          
+          // Client-side filtering for duration if backend doesn't support it
+          if (filters.duration !== 'all') {
+            songs = songs.filter(song => {
+              const duration = song.duration;
+              if (filters.duration === 'short') return duration < 180;
+              if (filters.duration === 'medium') return duration >= 180 && duration <= 360;
+              if (filters.duration === 'long') return duration > 360;
+              return true;
+            });
           }
         }
         
-        songs = await apiService.getSongs(songParams);
-        
-        // Client-side filtering for duration if backend doesn't support it
-        if (filters.duration !== 'all') {
-          songs = songs.filter(song => {
-            const duration = song.duration;
-            if (filters.duration === 'short') return duration < 180;
-            if (filters.duration === 'medium') return duration >= 180 && duration <= 360;
-            if (filters.duration === 'long') return duration > 360;
-            return true;
-          });
+        // Fetch albums
+        if (filters.contentType === 'all' || filters.contentType === 'albums') {
+          const albumParams = { ...baseParams };
+          if (filters.sortBy === 'recent') albumParams.ordering = '-created_at';
+          albums = await apiService.getAlbums(albumParams);
+          
+          // Client-side year filtering for albums if needed
+          if (filters.year) {
+            albums = albums.filter(album => {
+              const year = album.release_date ? new Date(album.release_date).getFullYear().toString() : '';
+              return year === filters.year;
+            });
+          }
         }
-      }
-      
-      // Fetch albums
-      if (filters.contentType === 'all' || filters.contentType === 'albums') {
-        const albumParams = { ...baseParams };
-        if (filters.sortBy === 'recent') albumParams.ordering = '-created_at';
-        albums = await apiService.getAlbums(albumParams);
         
-        // Client-side year filtering for albums if needed
-        if (filters.year) {
-          albums = albums.filter(album => {
-            const year = album.release_date ? new Date(album.release_date).getFullYear().toString() : '';
-            return year === filters.year;
-          });
+        // Fetch playlists
+        if (filters.contentType === 'all' || filters.contentType === 'playlists') {
+          const playlistParams = { ...baseParams };
+          if (filters.sortBy === 'recent') playlistParams.ordering = '-created_at';
+          playlists = await apiService.getPlaylists(playlistParams);
         }
-      }
-      
-      // Fetch playlists
-      if (filters.contentType === 'all' || filters.contentType === 'playlists') {
-        const playlistParams = { ...baseParams };
-        if (filters.sortBy === 'recent') playlistParams.ordering = '-created_at';
-        playlists = await apiService.getPlaylists(playlistParams);
-      }
-      
-      // Fetch users/artists
-      if (filters.contentType === 'all' || filters.contentType === 'artists') {
-        const userParams = { search: searchQuery };
-        users = await apiService.getUsers(userParams);
-      }
+        
+        // Fetch users/artists
+        if (filters.contentType === 'all' || filters.contentType === 'artists') {
+          const userParams = { search: query };
+          users = await apiService.getUsers(userParams);
+        }
 
-      setResults({ songs, albums, playlists, users });
-    } catch (error) {
-      console.error('Search error:', error);
-      setResults({ songs: [], albums: [], playlists: [], users: [] });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults({ songs: [], albums: [], playlists: [], users: [] });
-      return;
-    }
-
-    const searchDelayed = setTimeout(() => {
-      performSearch(query);
+        setResults({ songs, albums, playlists, users });
+      } catch (error) {
+        console.error('Search error:', error);
+        setResults({ songs: [], albums: [], playlists: [], users: [] });
+      } finally {
+        setLoading(false);
+      }
     }, 300);
 
     return () => clearTimeout(searchDelayed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, filters]);
 
   const handleSearch = (searchQuery: string) => {

@@ -261,12 +261,58 @@ class FavoriteListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         return Favorite.objects.filter(user=self.request.user).order_by("-created_at")
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class FavoriteDetailView(generics.DestroyAPIView):
     serializer_class = FavoriteSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return Favorite.objects.filter(user=self.request.user)
+
+class ToggleFavoriteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        item_type = request.data.get('item_type')
+        item_id = request.data.get('item_id')
+        
+        if not item_type or not item_id:
+            return Response(
+                {'error': 'item_type and item_id are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate item exists
+        if item_type == 'song':
+            get_object_or_404(Song, id=item_id, approved=True)
+        elif item_type == 'album':
+            get_object_or_404(Album, id=item_id)
+        elif item_type == 'playlist':
+            get_object_or_404(Playlist, id=item_id)
+        else:
+            return Response(
+                {'error': 'Invalid item_type. Must be song, album, or playlist'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Toggle favorite
+        favorite, created = Favorite.objects.get_or_create(
+            user=request.user,
+            item_type=item_type,
+            item_id=item_id
+        )
+        
+        if not created:
+            favorite.delete()
+            return Response({'favorited': False, 'message': 'Removed from favorites'}, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'favorited': True, 
+                'message': 'Added to favorites',
+                'favorite': FavoriteSerializer(favorite).data
+            }, status=status.HTTP_201_CREATED)
 
 # ==================== LISTENING HISTORY VIEWS ====================
 class ListeningHistoryListView(generics.ListAPIView):
@@ -275,6 +321,21 @@ class ListeningHistoryListView(generics.ListAPIView):
 
     def get_queryset(self):
         return ListeningHistory.objects.filter(user=self.request.user).order_by("-listened_at")
+
+class AddToHistoryView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        song_id = request.data.get('song_id')
+        if not song_id:
+            return Response({'error': 'song_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        song = get_object_or_404(Song, id=song_id, approved=True)
+        
+        # Create or update listening history
+        history_entry = ListeningHistory.objects.create(user=request.user, song=song)
+        
+        return Response(ListeningHistorySerializer(history_entry).data, status=status.HTTP_201_CREATED)
 
 # ==================== COMMENT VIEWS ====================
 class CommentListCreateView(generics.ListCreateAPIView):

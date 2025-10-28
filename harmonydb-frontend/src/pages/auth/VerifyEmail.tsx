@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';  // Add useRef
+import { useEffect, useState, useRef } from 'react';  // Add useRef
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Loader } from 'lucide-react';
@@ -94,8 +94,8 @@ const VerifyEmail = () => {
 
           {status === 'success' && (
             <div className="flex flex-col items-center space-y-4">
-              <CheckCircle size={48} className="text-green-500" />
-              <h2 className="text-2xl font-bold text-green-400">Email Verified!</h2>
+              <CheckCircle size={48} className="text-primary" />
+              <h2 className="text-2xl font-bold text-primary">Email Verified!</h2>
               <p className="text-gray-300">{message}</p>
               <p className="text-sm text-gray-400">Redirecting to login in a few seconds...</p>
             </div>

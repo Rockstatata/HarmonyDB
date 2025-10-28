@@ -39,7 +39,7 @@ const SQLTerminal: React.FC = () => {
               <h3 className="text-blue-400 font-bold text-lg">PostgreSQL Query Monitor</h3>
               {debugInfo && (
                 <div className="flex items-center space-x-4 text-sm">
-                  <span className="text-green-400 flex items-center">
+                  <span className="text-primary flex items-center">
                     <Code size={16} className="mr-1" />
                     {debugInfo.count} queries
                   </span>
@@ -78,14 +78,14 @@ const SQLTerminal: React.FC = () => {
                     >
                       <div className="flex items-center space-x-3">
                         <span className="text-blue-400 font-semibold">Query #{index + 1}</span>
-                        <span className="text-green-400 text-xs flex items-center">
+                        <span className="text-primary text-xs flex items-center">
                           <Clock size={14} className="mr-1" />
                           {query.time}s
                         </span>
                         {/* Query Type Badge */}
                         <span className={`text-xs px-2 py-1 rounded ${
                           query.sql.trim().toUpperCase().startsWith('SELECT') ? 'bg-blue-600 text-blue-100' :
-                          query.sql.trim().toUpperCase().startsWith('INSERT') ? 'bg-green-600 text-green-100' :
+                          query.sql.trim().toUpperCase().startsWith('INSERT') ? 'bg-primary text-white' :
                           query.sql.trim().toUpperCase().startsWith('UPDATE') ? 'bg-yellow-600 text-yellow-100' :
                           query.sql.trim().toUpperCase().startsWith('DELETE') ? 'bg-red-600 text-red-100' :
                           'bg-purple-600 text-purple-100'
@@ -120,7 +120,7 @@ const SQLTerminal: React.FC = () => {
                             <Terminal size={14} className="mr-1" />
                             Formatted SQL:
                           </div>
-                          <div className="bg-black p-3 rounded text-green-300 text-xs overflow-x-auto">
+                          <div className="bg-background border border-accent/20 p-3 rounded text-primary text-xs overflow-x-auto">
                             <pre className="whitespace-pre-wrap break-words">{query.formatted_sql}</pre>
                           </div>
                         </div>

@@ -76,7 +76,7 @@ const Library = () => {
         <h1 className="text-3xl font-bold text-white">Your Library</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center space-x-2 bg-primary hover:bg-primary/80 px-4 py-2 rounded-lg transition-colors"
         >
           <Plus size={20} className="text-white" />
           <span className="text-white">Create Playlist</span>
@@ -105,7 +105,7 @@ const Library = () => {
                 alt={playlist.name}
                 className="w-full aspect-square rounded-lg object-cover"
               />
-              <button className="absolute bottom-2 right-2 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+              <button className="absolute bottom-2 right-2 w-12 h-12 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                 <Play className="text-black ml-0.5" size={20} />
               </button>
             </div>
@@ -133,7 +133,7 @@ const Library = () => {
           <p className="text-gray-400 mb-4">Create your first playlist to get started</p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg text-white transition-colors"
+            className="bg-primary hover:bg-primary/80 px-6 py-2 rounded-lg text-white transition-colors"
           >
             Create Playlist
           </button>

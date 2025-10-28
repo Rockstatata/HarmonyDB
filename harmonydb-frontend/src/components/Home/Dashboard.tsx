@@ -3,6 +3,7 @@ import { Play, Heart, MoreHorizontal } from 'lucide-react';
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
 import { useAuth } from '../../context/authContext';
+import JumpBackIn from './JumpBackIn';
 import type { Song, Album, Playlist } from '../../types';
 
 const Dashboard = () => {
@@ -69,6 +70,9 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Jump Back In Section */}
+      {user?.role === 'listener' && <JumpBackIn />}
 
       {/* Quick Play Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -182,7 +186,7 @@ const Dashboard = () => {
                   alt={playlist.name}
                   className="w-full aspect-square rounded-lg object-cover"
                 />
-                <button className="absolute bottom-2 right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                <button className="absolute bottom-2 right-2 w-10 h-10 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
                   <Play className="text-black ml-0.5" size={16} />
                 </button>
               </div>

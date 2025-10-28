@@ -62,21 +62,21 @@ const History = () => {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-96">
-        <div className="text-gray-400">Loading your history...</div>
+      <div className="p-8 flex items-center justify-center min-h-96 font-poppins">
+        <div className="text-text-secondary">Loading your history...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-8">
-        <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-6 text-center">
-          <h3 className="text-red-400 font-semibold mb-2">Error Loading History</h3>
-          <p className="text-gray-400">{error}</p>
+      <div className="p-8 font-poppins">
+        <div className="bg-error/10 border border-error/20 rounded-lg p-6 text-center">
+          <h3 className="text-error font-semibold mb-2">Error Loading History</h3>
+          <p className="text-text-secondary">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-white transition-colors"
+            className="mt-4 px-4 py-2 bg-error hover:bg-error/80 rounded text-white transition-colors"
           >
             Retry
           </button>
@@ -86,47 +86,47 @@ const History = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 font-poppins">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-16 h-16 bg-gradient-secondary rounded-lg flex items-center justify-center">
             <Clock className="text-white" size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">Recently Played</h1>
-            <p className="text-gray-400">{history.length} songs</p>
+            <h1 className="text-3xl font-bold text-text-primary">Recently Played</h1>
+            <p className="text-text-secondary">{history.length} songs</p>
           </div>
         </div>
         
         {history.length > 0 && (
           <button
             onClick={handleClearHistory}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-surface/50 hover:bg-surface/70 rounded-lg transition-colors border border-border/20"
           >
-            <Trash2 size={16} className="text-gray-400" />
-            <span className="text-gray-400">Clear History</span>
+            <Trash2 size={16} className="text-text-muted" />
+            <span className="text-text-muted">Clear History</span>
           </button>
         )}
       </div>
 
       {history.length === 0 ? (
         <div className="text-center py-12">
-          <Clock className="mx-auto text-gray-600 mb-4" size={64} />
-          <h3 className="text-xl font-semibold text-white mb-2">No listening history yet</h3>
-          <p className="text-gray-400">Start listening to music to see your history here</p>
+          <Clock className="mx-auto text-text-muted mb-4" size={64} />
+          <h3 className="text-xl font-semibold text-text-primary mb-2">No listening history yet</h3>
+          <p className="text-text-secondary">Start listening to music to see your history here</p>
         </div>
       ) : (
         <div className="space-y-2">
           {history.map((item, index) => (
             <div
               key={`${item.id}-${item.listened_at}`}
-              className="flex items-center space-x-4 p-4 hover:bg-gray-800/50 rounded-lg group cursor-pointer"
+              className="flex items-center space-x-4 p-4 hover:bg-surface/30 rounded-lg group cursor-pointer transition-colors"
               onClick={() => handlePlaySong(item)}
             >
-              <div className="w-8 text-gray-400 text-sm">{index + 1}</div>
+              <div className="w-8 text-text-muted text-sm">{index + 1}</div>
               
               {/* Song Cover */}
-              <div className="w-12 h-12 rounded overflow-hidden bg-gray-700 flex-shrink-0">
+              <div className="w-12 h-12 rounded overflow-hidden bg-surface/50 flex-shrink-0">
                 {item.song?.cover_image ? (
                   <img
                     src={item.song.cover_image}
@@ -134,7 +134,7 @@ const History = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <div className="w-full h-full flex items-center justify-center text-text-muted">
                     <Clock size={16} />
                   </div>
                 )}
@@ -142,10 +142,10 @@ const History = () => {
               
               {/* Song Details */}
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">
+                <p className="text-text-primary font-medium truncate">
                   {item.song?.title || 'Unknown Song'}
                 </p>
-                <p className="text-gray-400 text-sm truncate">
+                <p className="text-text-secondary text-sm truncate">
                   {item.song?.artist_name || 'Unknown Artist'}
                   {item.song?.album_title && (
                     <span> • {item.song.album_title}</span>
@@ -154,13 +154,13 @@ const History = () => {
               </div>
               
               {/* Listen Time */}
-              <div className="text-gray-400 text-sm flex-shrink-0">
+              <div className="text-text-muted text-sm flex-shrink-0">
                 {formatListenTime(item.listened_at)}
               </div>
               
               {/* Play Button */}
               <button 
-                className="p-2 bg-green-600 hover:bg-green-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                className="p-2 bg-primary hover:bg-primary-600 rounded-full opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   handlePlaySong(item);

@@ -4,6 +4,7 @@ import { ArrowLeft, Play, Pause, Heart, MoreHorizontal, Music, Disc, Users, Veri
 import { apiService } from '../../services/apiServices';
 import { usePlayer } from '../../context/playerContext';
 import MediaCard from '../MediaCard';
+import FavoriteButton from '../ui/FavoriteButton';
 import type { User as Artist, Song, Album } from '../../types';
 
 interface ArtistStats {
@@ -81,6 +82,13 @@ const ArtistDetail = () => {
     playSong(song);
   };
 
+  const formatDuration = (seconds: number) => {
+    if (!seconds || seconds <= 0) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   if (loading) {
     return (
       <div className="p-8">
@@ -123,15 +131,15 @@ const ArtistDetail = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background font-poppins">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-b from-primary-900/40 to-dark-900/40 p-8">
+      <div className="relative bg-gradient-accent p-8">
         <div className="flex items-center space-x-4 mb-8">
           <Link 
             to="/home/artists" 
-            className="p-2 hover:bg-dark-800/50 rounded-full transition-colors"
+            className="p-2 hover:bg-surface/50 rounded-full transition-colors"
           >
-            <ArrowLeft className="text-white" size={24} />
+            <ArrowLeft className="text-text-primary" size={24} />
           </Link>
         </div>
 
@@ -158,26 +166,26 @@ const ArtistDetail = () => {
           </div>
 
           {/* Artist Info */}
-          <div className="flex-1 text-white">
+          <div className="flex-1 text-text-primary">
             <div className="flex items-center space-x-2 mb-2">
               {artist.email_verified && (
-                <Verified className="text-blue-500" size={20} />
+                <Verified className="text-info" size={20} />
               )}
-              <span className="text-sm text-gray-300 uppercase tracking-wide font-medium">
+              <span className="text-sm text-text-secondary uppercase tracking-wide font-medium">
                 Verified Artist
               </span>
             </div>
             
-            <h1 className="text-5xl lg:text-7xl font-bold mb-4">
+            <h1 className="text-5xl lg:text-7xl font-bold mb-4 text-text-primary">
               {artist.stage_name || artist.username}
             </h1>
             
             {artist.bio && (
-              <p className="text-gray-300 text-lg mb-6 max-w-2xl">{artist.bio}</p>
+              <p className="text-text-secondary text-lg mb-6 max-w-2xl">{artist.bio}</p>
             )}
             
             {/* Stats */}
-            <div className="flex items-center space-x-6 text-sm">
+            <div className="flex items-center space-x-6 text-sm text-text-secondary">
               <span className="flex items-center space-x-1">
                 <Users size={16} />
                 <span>{stats.followers.toLocaleString()} followers</span>
@@ -194,7 +202,7 @@ const ArtistDetail = () => {
             </div>
             
             {artist.created_at && (
-              <div className="flex items-center space-x-1 mt-2 text-gray-400 text-sm">
+              <div className="flex items-center space-x-1 mt-2 text-text-muted text-sm">
                 <Calendar size={16} />
                 <span>Joined {new Date(artist.created_at).toLocaleDateString('en-US', { 
                   year: 'numeric', 
@@ -209,7 +217,7 @@ const ArtistDetail = () => {
         <div className="flex items-center space-x-4 mt-8">
           <button
             onClick={playArtistSongs}
-            className="w-14 h-14 bg-primary-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            className="w-14 h-14 bg-gradient-primary rounded-full flex items-center justify-center hover:scale-105 transition-transform"
           >
             {isPlaying && playerIsPlaying ? (
               <Pause className="text-white" size={24} fill="currentColor" />
@@ -218,25 +226,25 @@ const ArtistDetail = () => {
             )}
           </button>
           
-          <button className="p-3 hover:bg-dark-800/50 rounded-full transition-colors">
-            <Heart className="text-gray-400 hover:text-white" size={24} />
+          <button className="p-3 hover:bg-surface/50 rounded-full transition-colors">
+            <Heart className="text-text-muted hover:text-text-primary" size={24} />
           </button>
           
-          <button className="p-3 hover:bg-dark-800/50 rounded-full transition-colors">
-            <MoreHorizontal className="text-gray-400 hover:text-white" size={24} />
+          <button className="p-3 hover:bg-surface/50 rounded-full transition-colors">
+            <MoreHorizontal className="text-text-muted hover:text-text-primary" size={24} />
           </button>
         </div>
       </div>
 
       {/* Content Tabs */}
       <div className="p-8">
-        <div className="flex space-x-8 border-b border-gray-600 mb-8">
+        <div className="flex space-x-8 border-b border-border mb-8">
           <button
             onClick={() => setSelectedTab('songs')}
             className={`pb-4 text-lg font-medium transition-colors ${
               selectedTab === 'songs'
-                ? 'text-white border-b-2 border-primary-500'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-text-primary border-b-2 border-primary'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             Songs ({songs.length})
@@ -245,8 +253,8 @@ const ArtistDetail = () => {
             onClick={() => setSelectedTab('albums')}
             className={`pb-4 text-lg font-medium transition-colors ${
               selectedTab === 'albums'
-                ? 'text-white border-b-2 border-primary-500'
-                : 'text-gray-400 hover:text-white'
+                ? 'text-text-primary border-b-2 border-primary'
+                : 'text-text-secondary hover:text-text-primary'
             }`}
           >
             Albums ({albums.length})
@@ -260,12 +268,12 @@ const ArtistDetail = () => {
               songs.map((song, index) => (
                 <div
                   key={song.id}
-                  className="group flex items-center space-x-4 p-3 rounded-lg hover:bg-dark-800/30 transition-colors cursor-pointer"
+                  className="group flex items-center space-x-4 p-3 rounded-lg hover:bg-surface/30 transition-colors cursor-pointer"
                   onClick={() => handleSongPlay(song)}
                 >
                   <div className="w-8 text-center">
-                    <span className={`text-sm font-medium ${
-                      currentSong?.id === song.id ? 'text-primary-400' : 'text-gray-400'
+                    <span className={`text-sm font-medium font-poppins ${
+                      currentSong?.id === song.id ? 'text-primary' : 'text-text-muted'
                     }`}>
                       {index + 1}
                     </span>
@@ -278,30 +286,38 @@ const ArtistDetail = () => {
                   />
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className={`font-medium truncate ${
-                      currentSong?.id === song.id ? 'text-primary-400' : 'text-white'
+                    <h4 className={`font-medium truncate font-poppins ${
+                      currentSong?.id === song.id ? 'text-primary' : 'text-text-primary'
                     }`}>
                       {song.title}
                     </h4>
-                    <p className="text-gray-400 text-sm truncate">
+                    <p className="text-text-secondary text-sm truncate font-poppins">
                       {song.album_title || 'Single'}
                     </p>
                   </div>
                   
-                  <div className="text-gray-400 text-sm">
-                    {song.play_count.toLocaleString()}
+                  <div className="text-text-muted text-sm font-poppins">
+                    {song.play_count.toLocaleString()} plays
                   </div>
                   
-                  <div className="text-gray-400 text-sm">
-                    {Math.floor(song.duration / 60)}:{(song.duration % 60).toString().padStart(2, '0')}
+                  <div className="flex items-center space-x-3">
+                    <FavoriteButton 
+                      itemType="song" 
+                      itemId={song.id} 
+                      size={16}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                    <div className="text-text-muted text-sm font-poppins">
+                      {formatDuration(song.duration)}
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center py-12">
-                <Music className="mx-auto text-gray-500 mb-4" size={64} />
-                <h3 className="text-xl font-semibold text-gray-400 mb-2">No Songs</h3>
-                <p className="text-gray-500">This artist hasn't released any songs yet.</p>
+                <Music className="mx-auto text-text-muted mb-4" size={64} />
+                <h3 className="text-xl font-semibold text-text-secondary mb-2 font-poppins">No Songs</h3>
+                <p className="text-text-muted font-poppins">This artist hasn't released any songs yet.</p>
               </div>
             )}
           </div>
@@ -322,9 +338,9 @@ const ArtistDetail = () => {
               ))
             ) : (
               <div className="col-span-full text-center py-12">
-                <Disc className="mx-auto text-gray-500 mb-4" size={64} />
-                <h3 className="text-xl font-semibold text-gray-400 mb-2">No Albums</h3>
-                <p className="text-gray-500">This artist hasn't released any albums yet.</p>
+                <Disc className="mx-auto text-text-muted mb-4" size={64} />
+                <h3 className="text-xl font-semibold text-text-secondary mb-2 font-poppins">No Albums</h3>
+                <p className="text-text-muted font-poppins">This artist hasn't released any albums yet.</p>
               </div>
             )}
           </div>

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import FavoriteButton from './ui/FavoriteButton';
 
 export type MediaCardProps = {
   variant?: 'artist' | 'media';
-  mediaType?: 'album' | 'song';
+  mediaType?: 'album' | 'song' | 'playlist';
   inArtistPage?: boolean;
   title: string; // Album/song name or Artist name
   subtitle?: string; // Artist name or album/song name depending on variant
@@ -11,6 +12,8 @@ export type MediaCardProps = {
   onClick?: () => void;
   className?: string;
   imageOverlay?: boolean;
+  showFavorite?: boolean;
+  itemId?: number;
 };
 
 function getYear(dateStr?: string) {
@@ -31,8 +34,10 @@ export default function MediaCard({
   releaseDate,
   imageSrc,
   onClick,
-  className = ''
-  , imageOverlay = true
+  className = '',
+  imageOverlay = true,
+  showFavorite = false,
+  itemId
 }: MediaCardProps) {
   const [accent, setAccent] = useState('rgba(226,62,87,0.85)');
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -95,7 +100,7 @@ export default function MediaCard({
     <div
       onClick={onClick}
       onKeyDown={handleKeyDown}
-      className={`group w-48 sm:w-48 md:w-64 rounded-3xl overflow-hidden shadow-2xl bg-transparent cursor-pointer border border-white/10 backdrop-blur-sm flex flex-col h-[320px] transform transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 ${className}`}
+      className={`group w-48 sm:w-48 md:w-64 rounded-3xl overflow-hidden shadow-2xl bg-surface/20 cursor-pointer border border-border/20 backdrop-blur-sm flex flex-col h-[320px] transform transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-105 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${className}`}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       style={{ borderRadius: 24}}
@@ -108,6 +113,20 @@ export default function MediaCard({
           className="w-full h-full object-cover block"
           style={{ borderRadius: 24 }}
         />
+
+        {/* Favorite button in top-right corner */}
+        {showFavorite && itemId && mediaType && mediaType !== 'artist' && (
+          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="bg-background/80 backdrop-blur-sm rounded-full p-2 border border-border/30">
+              <FavoriteButton 
+                itemType={mediaType as 'song' | 'album' | 'playlist'} 
+                itemId={itemId}
+                size={16}
+                showTooltip={false}
+              />
+            </div>
+          </div>
+        )}
 
         {/* accent strip + soft glow */}
         <div
@@ -146,13 +165,13 @@ export default function MediaCard({
           // - artist variant: show artist name only
           // - media variant: show title, mediaType label, and year (no subtitle)
           variant === 'artist' ? (
-            <div className="text-xl md:text-2xl font-poppins font-semibold text-white leading-tight">{title}</div>
+            <div className="text-xl md:text-2xl font-poppins font-semibold text-text-primary leading-tight">{title}</div>
           ) : (
             <>
-              <div className="text-xl md:text-2xl font-poppins font-semibold text-white leading-tight">{title}</div>
-              <div className="mt-3 text-sm text-gray-300">
-                <div className="font-poppins font-medium text-gray-200">{mediaType === 'song' ? 'Song' : 'Album'}</div>
-                {year && <div className="mt-1 text-xs text-gray-400">{year}</div>}
+              <div className="text-xl md:text-2xl font-poppins font-semibold text-text-primary leading-tight">{title}</div>
+              <div className="mt-3 text-sm text-text-secondary">
+                <div className="font-poppins font-medium text-text-secondary">{mediaType === 'song' ? 'Song' : mediaType === 'album' ? 'Album' : 'Playlist'}</div>
+                {year && <div className="mt-1 text-xs text-text-muted">{year}</div>}
               </div>
             </>
           )
@@ -160,23 +179,23 @@ export default function MediaCard({
           // Default behavior (not in artist page): keep previous layouts
           variant === 'artist' ? (
             <>
-              <div className="text-xl md:text-2xl font-poppins font-semibold text-white leading-tight">
+              <div className="text-xl md:text-2xl font-poppins font-semibold text-text-primary leading-tight">
                 {title}
               </div>
 
-              <div className="mt-3 text-sm text-gray-300">
+              <div className="mt-3 text-sm text-text-secondary">
                 {year && (
-                  <div className="mt-1 text-xs text-gray-400">{year}</div>
+                  <div className="mt-1 text-xs text-text-muted">{year}</div>
                 )}
               </div>
             </>
           ) : (
             <>
-              <div className="text-xl md:text-2xl font-poppins font-semibold text-white leading-tight">
+              <div className="text-xl md:text-2xl font-poppins font-semibold text-text-primary leading-tight">
                 {title}
               </div>
               {subtitle && (
-                <div className="mt-2 text-sm text-gray-300 font-poppins">{subtitle}</div>
+                <div className="mt-2 text-sm text-text-secondary font-poppins">{subtitle}</div>
               )}
             </>
           )

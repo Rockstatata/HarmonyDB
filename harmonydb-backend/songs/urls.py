@@ -9,9 +9,9 @@ from .views import (
     # Playlist views
     PlaylistListCreateView, PlaylistDetailView, PlaylistAddSongView, PlaylistRemoveSongView,
     # Favorite views
-    FavoriteListCreateView, FavoriteDetailView,
+    FavoriteListCreateView, FavoriteDetailView, ToggleFavoriteView,
     # Listening history views
-    ListeningHistoryListView,
+    ListeningHistoryListView, AddToHistoryView,
     # Comment views
     CommentListCreateView, CommentDetailView,
     # AI views
@@ -41,9 +41,11 @@ urlpatterns = [
     # Favorite URLs
     path("favorites/", FavoriteListCreateView.as_view(), name="favorite-list-create"),
     path("favorites/<int:pk>/", FavoriteDetailView.as_view(), name="favorite-detail"),
+    path("favorites/toggle/", ToggleFavoriteView.as_view(), name="favorite-toggle"),
     
     # Listening history URLs
     path("history/", ListeningHistoryListView.as_view(), name="listening-history"),
+    path("history/add/", AddToHistoryView.as_view(), name="add-to-history"),
     
     # Comment URLs
     path("comments/", CommentListCreateView.as_view(), name="comment-list-create"),

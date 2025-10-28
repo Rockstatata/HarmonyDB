@@ -58,7 +58,7 @@ export default function Sidebar() {
       <div className="mt-6 px-6">
         <div className={`px-3 py-2 rounded-lg text-center text-xs font-medium ${
           user?.role === 'artist' 
-            ? 'bg-green-600/20 text-green-400 border border-green-600/30' 
+            ? 'bg-primary/20 text-primary border border-primary/30' 
             : 'bg-blue-600/20 text-blue-400 border border-blue-600/30'
         }`}>
           {user?.role === 'artist' ? '🎵 Artist Account' : '🎧 Music Listener'}
