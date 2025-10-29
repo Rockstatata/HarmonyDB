@@ -2,8 +2,6 @@
 
 # HarmonyDB 🎵
 
-# 🎵 HarmonyDB
-
 **Tagline:** A Spotify-like music library and player with AI-powered natural language queries.
 
 ### *A Revolutionary Full-Stack Music Streaming Platform with AI-Powered Database Querying*
@@ -11,116 +9,38 @@
 ---
 
 [![Django](https://img.shields.io/badge/Django-5.2.6-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
-
-[![React](https://img.shields.io/badge/React-19.1.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)## Table of Contents
-
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)1. [Project Overview](#project-overview)  
-
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)2. [Features](#features)  
-
-[![TailwindCSS](https://img.shields.io/badge/Tailwind-4.1.13-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)3. [Tech Stack](#tech-stack)  
-
-4. [Database Schema](#database-schema)  
-
-**A comprehensive music streaming platform that bridges the gap between modern web applications and advanced database systems through natural language processing.**5. [Installation](#installation)  
-
-6. [Running the Project](#running-the-project)  
-
-[✨ Features](#-features) • [🏗️ Architecture](#️-architecture) • [🚀 Getting Started](#-getting-started) • [📸 Screenshots](#-screenshots) • [🎯 Use Cases](#-use-cases)7. [Usage](#usage)  
-
-8. [AI/LLM Integration](#aillm-integration)  
-
-</div>9. [Project Structure](#project-structure)  
-
-10. [Contributing](#contributing)  
-
----11. [License](#license)
-
-
-
-## 📋 Table of Contents---
-
-
-
-- [Overview](#-overview)## Project Overview
-
-- [Key Highlights](#-key-highlights)
-
-- [Features](#-features)**HarmonyDB** is a full-featured music web application designed for users to:
-
-- [Tech Stack](#-tech-stack)
-
-- [Architecture](#️-architecture)- Upload, organize, and play music tracks.
-
-- [Database Design](#-database-design)- Create playlists, like songs, albums, and playlists.
-
-- [AI/LLM Integration](#-aillm-integration)- View listening history and comments.
-
-- [Getting Started](#-getting-started)- Explore artist discographies and genres.
-
-- [Project Structure](#-project-structure)- Interact with an AI-powered assistant that converts natural language queries into SQL commands and fetches results.
-
-- [API Documentation](#-api-documentation)
-
-- [Advanced SQL Demonstrations](#-advanced-sql-demonstrations)The project is built with **Django (backend)**, **React (frontend)**, and **PostgreSQL (database)**. It includes **LLM integration** for natural language querying of the database.
-
-- [Screenshots](#-screenshots)
-
-- [Use Cases](#-use-cases)---
-
-- [Contributing](#-contributing)
-
-- [License](#-license)## Features
-
-- [Acknowledgments](#-acknowledgments)
-
-- User authentication and roles (`listener`, `artist`, `admin`)  
-
----- Artist and album management  
-
-- Track upload and streaming  
-
-## 🌟 Overview- Playlists creation and management  
-
-- Favorites and listening history tracking  
-
-**HarmonyDB** is not just another music streaming application—it's a comprehensive demonstration of modern full-stack development practices, advanced database management systems (DBMS) concepts, and cutting-edge AI integration. Built from the ground up as a sophisticated educational and practical project, HarmonyDB showcases:- Comments on songs and albums  
-
-- AI-powered query assistant (natural language → SQL → results)  
-
-- **Full-Stack Excellence**: A seamless integration of Django REST Framework backend with a modern React TypeScript frontend- Admin logs and actions  
-
-- **Advanced Database Operations**: Real-world implementation of complex SQL queries, window functions, subqueries, and advanced aggregations- Genre categorization and multi-genre support  
-
-- **AI-Powered Interactions**: Natural language to SQL query conversion using state-of-the-art LLM models (Groq API)
-
-- **Production-Ready Features**: JWT authentication, role-based access control, real-time SQL debugging, and comprehensive analytics---
-
-- **Educational Value**: Every component designed to demonstrate DBMS concepts in a practical, real-world application
-
-## Tech Stack
+[![React](https://img.shields.io/badge/React-19.1.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-4.1.13-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 ---
 
-- **Backend:** Django, Django REST Framework  
+</div>
 
-## 🎯 Key Highlights- **Frontend:** React.js, HTML5, CSS3, JavaScript  
+## 📋 Table of Contents
 
-- **Database:** PostgreSQL  
+- [Project Overview](#project-overview)
+- [Key Highlights](#key-highlights)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Database Schema](#database-schema)
+- [Installation](#installation)
+- [Running the Project](#running-the-project)
+- [Usage](#usage)
+- [AI/LLM Integration](#aillm-integration)
+- [Project Structure](#project-structure)
+- [API Documentation](#api-documentation)
+- [Advanced SQL Demonstrations](#advanced-sql-demonstrations)
+- [Screenshots](#screenshots)
+- [Use Cases](#use-cases)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [Contact](#contact)
+- [Project Statistics](#project-statistics)
 
-### 🔥 What Makes HarmonyDB Special- **AI Integration:** OpenRouter / Groq API  
-
-- **File Storage:** Local `MEDIA` directory (for music files, cover images)  
-
-1. **🤖 AI-Powered Natural Language Queries**- **Version Control:** Git & GitHub  
-
-   - Ask questions in plain English: *"Show me all songs by The Weeknd from the last 30 days"*
-
-   - Automatic SQL generation and execution---
-
-   - Support for complex queries including JOINs, subqueries, aggregations, and window functions
-
-   - Fallback processing for enhanced reliability## Database Schema
+---
 
 
 
@@ -128,219 +48,269 @@
 
    - Built-in SQL Terminal showing all database operations- Artists (`artist_id`, `stage_name`, `bio`, `profile_picture_url`)  
 
-   - Query execution time monitoring- Albums (`album_id`, `artist_id`, `title`, `release_date`, `cover_url`)  
+## 🌟 Overview
 
-   - Beautiful syntax highlighting- Songs (`song_id`, `album_id`, `artist_id`, `genre_id`, `title`, `duration`, `file_url`, `release_date`)  
+**HarmonyDB** is not just another music streaming application—it's a comprehensive demonstration of modern full-stack development practices, advanced database management systems (DBMS) concepts, and cutting-edge AI integration. Built from the ground up as a sophisticated educational and practical project, HarmonyDB showcases:
 
-   - Educational tool for understanding backend operations- Playlists (`playlist_id`, `user_id`, `title`, `is_public`)  
+- **Full-Stack Excellence**: A seamless integration of Django REST Framework backend with a modern React TypeScript frontend
+- **Advanced Database Operations**: Real-world implementation of complex SQL queries, window functions, subqueries, and advanced aggregations
+- **AI-Powered Interactions**: Natural language to SQL query conversion using state-of-the-art LLM models (Groq API)
+- **Production-Ready Features**: JWT authentication, role-based access control, real-time SQL debugging, and comprehensive analytics
+- **Educational Value**: Every component designed to demonstrate DBMS concepts in a practical, real-world application
 
-- Playlist_Songs (junction table)  
+## 🎯 Key Highlights
 
-3. **🎭 Dual-Role System Architecture**- Favorites, Listening_History, Comments, Admin_Logs  
+### 🔥 What Makes HarmonyDB Special
 
-   - **Listeners**: Discover music, create playlists, track listening history- Genres and Track_Genres (M:N)  
+1. **🤖 AI-Powered Natural Language Queries**
+   - Ask questions in plain English: *"Show me all songs by The Weeknd from the last 30 days"*
+   - Automatic SQL generation and execution
+   - Support for complex queries including JOINs, subqueries, aggregations, and window functions
+   - Fallback processing for enhanced reliability
 
-   - **Artists**: Upload songs, create albums, manage discography, view analytics- AI_Prompts, AI_Interactions  
+2. **📊 Real-Time SQL Query Visualization**
+   - Built-in SQL Terminal showing all database operations
+   - Query execution time monitoring
+   - Beautiful syntax highlighting
+   - Educational tool for understanding backend operations
 
+3. **🎭 Dual-Role System Architecture**
+   - **Listeners**: Discover music, create playlists, track listening history
+   - **Artists**: Upload songs, create albums, manage discography, view analytics
 
-
-4. **📈 Advanced Analytics Dashboard**> Full ER diagram and cardinalities are included in `/docs` folder.
-
+4. **📈 Advanced Analytics Dashboard**
    - Trending songs with sophisticated scoring algorithms
-
-   - User behavior analytics---
-
+   - User behavior analytics
    - Genre distribution analysis
+   - Play count trends and patterns
 
-   - Play count trends and patterns## Installation
+5. **🔐 Enterprise-Grade Security**
+   - JWT-based authentication with token refresh
+   - Role-based access control (RBAC)
+   - Token blacklisting on logout
+   - Secure password hashing with Django's built-in validators
 
-
-
-5. **🔐 Enterprise-Grade Security**1. **Clone the repository**
-
-   - JWT-based authentication with token refresh```bash
-
-   - Role-based access control (RBAC)git clone https://github.com/yourusername/harmonydb.git
-
-   - Token blacklisting on logoutcd harmonydb
-
-   - Secure password hashing with Django's built-in validators````
-
-
-
-6. **🎨 Modern, Responsive UI/UX**2. **Set up Python environment**
-
+6. **🎨 Modern, Responsive UI/UX**
    - Sleek design with Tailwind CSS 4.x
+   - Smooth animations with Framer Motion
+   - Responsive across all devices
+   - Intuitive navigation and user experiences
 
-   - Smooth animations with Framer Motion```bash
+## ✨ Features
 
-   - Responsive across all devicespython3 -m venv venv
-
-   - Intuitive navigation and user experiencesource venv/bin/activate
-
-pip install -r requirements.txt
-
----```
-
-
-
-## ✨ Features3. **Set up PostgreSQL database**
-
-
-
-### 🎵 Music Management```sql
-
-- **Song Upload & Streaming**: High-quality audio file management with cover imagesCREATE DATABASE harmonydb;
-
-- **Album Organization**: Group songs into albums with metadata and artworkCREATE USER harmonyuser WITH PASSWORD 'yourpassword';
-
-- **Genre Categorization**: Multi-genre support with custom genre creationGRANT ALL PRIVILEGES ON DATABASE harmonydb TO harmonyuser;
-
-- **Advanced Search**: Full-text search across songs, artists, albums, and genres```
-
+### 🎵 Music Management
+- **Song Upload & Streaming**: High-quality audio file management with cover images
+- **Album Organization**: Group songs into albums with metadata and artwork
+- **Genre Categorization**: Multi-genre support with custom genre creation
+- **Advanced Search**: Full-text search across songs, artists, albums, and genres
 - **Audio Player**: Feature-rich player with queue management
 
-4. **Configure Django**
-
 ### 👤 User Features
-
-- **Multi-Role Authentication**: Separate experiences for Listeners and Artists* Edit `settings.py` to point to PostgreSQL:
-
+- **Multi-Role Authentication**: Separate experiences for Listeners and Artists
 - **Profile Management**: Customizable user profiles with bios and profile pictures
+- **Playlist Creation**: Unlimited public/private playlists
+- **Favorites System**: Like songs, albums, and playlists
+- **Listening History**: Track all played songs with timestamps
+- **Comments & Engagement**: Comment on songs and albums
 
-- **Playlist Creation**: Unlimited public/private playlists```python
+### 🎤 Artist Features
+- **Music Upload**: Upload songs with detailed metadata
+- **Album Management**: Create and manage album collections
+- **Analytics Dashboard**: View play counts, listener statistics, and trends
+- **Profile Customization**: Stage name, bio, and artist profile picture
 
-- **Favorites System**: Like songs, albums, and playlistsDATABASES = {
-
-- **Listening History**: Track all played songs with timestamps    'default': {
-
-- **Comments & Engagement**: Comment on songs and albums        'ENGINE': 'django.db.backends.postgresql',
-
-        'NAME': 'harmonydb',
-
-### 🎤 Artist Features        'USER': 'harmonyuser',
-
-- **Music Upload**: Upload songs with detailed metadata        'PASSWORD': 'yourpassword',
-
-- **Album Management**: Create and manage album collections        'HOST': 'localhost',
-
-- **Analytics Dashboard**: View play counts, listener statistics, and trends        'PORT': '5432',
-
-- **Profile Customization**: Stage name, bio, and artist profile picture    }
-
-}
-
-### 🤖 AI Assistant (MeloAI)```
-
+### 🤖 AI Assistant (MeloAI)
 - **Natural Language Queries**: Ask questions in plain English
-
-- **SQL Generation**: Automatic SQL query generation from natural language5. **Run migrations**
-
+- **SQL Generation**: Automatic SQL query generation from natural language
 - **Query Execution**: Safe execution of generated queries
+- **DBMS Concept Demonstration**: Supports all major SQL concepts
 
-- **DBMS Concept Demonstration**: Supports all major SQL concepts```bash
-
-  - Basic queries (SELECT, WHERE, ORDER BY, LIMIT)python manage.py makemigrations
-
-  - Aggregations (COUNT, AVG, MAX, MIN, SUM)python manage.py migrate
-
-  - JOINs (INNER, LEFT, with multiple tables)```
-
-  - Subqueries (scalar and correlated)
-
-  - Window functions (RANK, ROW_NUMBER)6. **Create superuser**
-
-  - GROUP BY operations
-
-  - Date/time filtering```bash
-
-  - Text pattern matching (LIKE, ILIKE)python manage.py createsuperuser
-
-  - User-specific queries (favorites, history)```
-
-
-
-### 📊 Analytics & Insights---
-
+### 📊 Analytics & Insights
 - **Trending Analysis**: Identify trending songs based on recent activity
-
-- **User Statistics**: Comprehensive stats for both listeners and artists## Running the Project
-
+- **User Statistics**: Comprehensive stats for both listeners and artists
 - **Genre Analytics**: Distribution and popularity metrics
+- **Play Count Tracking**: Automatic increment on song play
 
-- **Play Count Tracking**: Automatic increment on song play**Backend**
+## 🛠️ Tech Stack
 
-
-
----```bash
-
-python manage.py runserver
-
-## 🛠️ Tech Stack```
-
-
-
-### Backend**Frontend**
-
+### Backend
 | Technology | Version | Purpose |
-
-|-----------|---------|---------|```bash
-
-| **Django** | 5.2.6 | Core web framework |cd frontend
-
-| **Django REST Framework** | Latest | RESTful API development |npm install
-
-| **PostgreSQL** | 14+ | Primary database |npm start
-
-| **djangorestframework-simplejwt** | Latest | JWT authentication |```
-
+|-----------|---------|---------|
+| **Django** | 5.2.6 | Core web framework |
+| **Django REST Framework** | Latest | RESTful API development |
+| **PostgreSQL** | 14+ | Primary database |
+| **djangorestframework-simplejwt** | Latest | JWT authentication |
 | **django-cors-headers** | Latest | Cross-origin resource sharing |
-
-| **Pillow** | Latest | Image processing |Open [http://localhost:8000](http://localhost:8000) to access the app.
-
+| **Pillow** | Latest | Image processing |
 | **python-dotenv** | Latest | Environment variable management |
+| **Groq API** | Latest | LLM for natural language processing |
 
-| **Groq API** | Latest | LLM for natural language processing |---
-
-
-
-### Frontend## Usage
-
+### Frontend
 | Technology | Version | Purpose |
-
-|-----------|---------|---------|* Register or log in as a listener or artist.
-
-| **React** | 19.1.1 | UI framework |* Upload tracks (artists only) and organize into albums.
-
-| **TypeScript** | 5.8.3 | Type-safe JavaScript |* Create playlists, like tracks/albums, leave comments.
-
-| **Vite** | 7.1.2 | Build tool and dev server |* Use the AI Chatbox to query the database using natural language.
-
+|-----------|---------|---------|
+| **React** | 19.1.1 | UI framework |
+| **TypeScript** | 5.8.3 | Type-safe JavaScript |
+| **Vite** | 7.1.2 | Build tool and dev server |
 | **Tailwind CSS** | 4.1.13 | Utility-first CSS framework |
-
-| **Framer Motion** | 12.23.15 | Animation library |---
-
+| **Framer Motion** | 12.23.15 | Animation library |
 | **React Router** | 7.9.1 | Client-side routing |
+| **Lucide React** | Latest | Icon library |
 
-| **Lucide React** | Latest | Icon library |## AI/LLM Integration
+### Development Tools
+- **ESLint** - Code quality and consistency
+- **TypeScript ESLint** - TypeScript-specific linting
+- **Vite Plugin React** - Fast refresh and JSX support
 
+## 💾 Database Schema
 
+### Entity-Relationship Model
 
-### Development Tools* Users can type or speak queries in natural language (e.g., *"Show all songs by Arijit Singh uploaded in 2024"*).
+Our database schema follows **Third Normal Form (3NF)** principles to eliminate data redundancy and ensure data integrity.
 
-- **ESLint** - Code quality and consistency* The prompt is sent to the LLM (OpenRouter / Groq) which returns SQL code.
+#### Core Tables
 
-- **TypeScript ESLint** - TypeScript-specific linting* Django safely executes the SQL query and returns the results in the UI.
+**Users Table**
+```sql
+users (
+  id: SERIAL PRIMARY KEY,
+  username: VARCHAR(150) UNIQUE NOT NULL,
+  email: VARCHAR(254) UNIQUE NOT NULL,
+  password: VARCHAR(128) NOT NULL,
+  role: VARCHAR(20) CHECK(role IN ('listener', 'artist')),
+  email_verified: BOOLEAN DEFAULT FALSE,
+  profile_picture: VARCHAR(255),
+  bio: TEXT,
+  stage_name: VARCHAR(255),  -- For artists
+  birth_date: DATE,           -- For listeners
+  created_at: TIMESTAMP DEFAULT NOW(),
+  updated_at: TIMESTAMP DEFAULT NOW()
+)
+```
 
-- **Vite Plugin React** - Fast refresh and JSX support* All AI prompts and interactions are logged in the `ai_prompts` and `ai_interactions` tables.
+**Songs Table**
+```sql
+songs (
+  id: SERIAL PRIMARY KEY,
+  title: VARCHAR(255) NOT NULL,
+  artist_id: INT REFERENCES users(id) ON DELETE CASCADE,
+  album_id: INT REFERENCES albums(id) ON DELETE SET NULL,
+  genre_id: INT REFERENCES genres(id) ON DELETE SET NULL,
+  audio_file: VARCHAR(255) NOT NULL,
+  cover_image: VARCHAR(255),
+  duration: FLOAT DEFAULT 0,
+  play_count: INT DEFAULT 0,
+  release_date: DATE DEFAULT NOW(),
+  upload_date: TIMESTAMP DEFAULT NOW(),
+  approved: BOOLEAN DEFAULT TRUE
+)
+```
 
+**Albums Table**
+```sql
+albums (
+  id: SERIAL PRIMARY KEY,
+  title: VARCHAR(255) NOT NULL,
+  artist_id: INT REFERENCES users(id) ON DELETE CASCADE,
+  cover_image: VARCHAR(255),
+  release_date: DATE,
+  created_at: TIMESTAMP DEFAULT NOW(),
+  updated_at: TIMESTAMP DEFAULT NOW()
+)
+```
 
+**Playlists & Playlist_Songs (M:N)**
+```sql
+playlists (
+  id: SERIAL PRIMARY KEY,
+  name: VARCHAR(255) NOT NULL,
+  user_id: INT REFERENCES users(id) ON DELETE CASCADE,
+  cover_image: VARCHAR(255),
+  is_public: BOOLEAN DEFAULT TRUE,
+  created_at: TIMESTAMP DEFAULT NOW()
+)
 
-------
+playlist_songs (
+  id: SERIAL PRIMARY KEY,
+  playlist_id: INT REFERENCES playlists(id) ON DELETE CASCADE,
+  song_id: INT REFERENCES songs(id) ON DELETE CASCADE,
+  added_at: TIMESTAMP DEFAULT NOW(),
+  order: INT DEFAULT 0,
+  UNIQUE(playlist_id, song_id)
+)
+```
 
+**Favorites (Polymorphic)**
+```sql
+favorites (
+  id: SERIAL PRIMARY KEY,
+  user_id: INT REFERENCES users(id) ON DELETE CASCADE,
+  item_type: VARCHAR(20) CHECK(item_type IN ('song', 'album', 'playlist')),
+  item_id: INT NOT NULL,
+  created_at: TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, item_type, item_id)
+)
+```
 
+**Listening History**
+```sql
+listening_history (
+  id: SERIAL PRIMARY KEY,
+  user_id: INT REFERENCES users(id) ON DELETE CASCADE,
+  song_id: INT REFERENCES songs(id) ON DELETE CASCADE,
+  listened_at: TIMESTAMP DEFAULT NOW()
+)
+```
 
-## 🏗️ Architecture## Project Structure
+**AI Integration Tables**
+```sql
+ai_prompts (
+  id: SERIAL PRIMARY KEY,
+  user_id: INT REFERENCES users(id) ON DELETE CASCADE,
+  prompt_text: TEXT NOT NULL,
+  response_text: TEXT,
+  generated_sql: TEXT,
+  executed_result: TEXT,
+  created_at: TIMESTAMP DEFAULT NOW()
+)
+
+ai_interactions (
+  id: SERIAL PRIMARY KEY,
+  user_id: INT REFERENCES ai_prompts(id) ON DELETE CASCADE,
+  prompt_id: INT REFERENCES ai_prompts(id) ON DELETE CASCADE,
+  message_type: VARCHAR(10) CHECK(message_type IN ('user', 'ai')),
+  message_text: TEXT NOT NULL,
+  timestamp: TIMESTAMP DEFAULT NOW()
+)
+```
+
+### Key Relationships
+
+- **User → Songs**: One-to-Many (An artist can have many songs)
+- **User → Albums**: One-to-Many (An artist can have many albums)
+- **User → Playlists**: One-to-Many (A user can have many playlists)
+- **Album → Songs**: One-to-Many (An album contains many songs)
+- **Genre → Songs**: One-to-Many (A genre can classify many songs)
+- **Playlist ↔ Songs**: Many-to-Many (through playlist_songs)
+- **User → Favorites**: One-to-Many (Polymorphic relationship)
+- **User → Listening History**: One-to-Many
+
+### Database Constraints & Indexes
+
+```sql
+-- Unique constraints
+CREATE UNIQUE INDEX idx_users_username ON users(username);
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+CREATE UNIQUE INDEX idx_playlist_songs ON playlist_songs(playlist_id, song_id);
+
+-- Performance indexes
+CREATE INDEX idx_songs_artist ON songs(artist_id);
+CREATE INDEX idx_songs_album ON songs(album_id);
+CREATE INDEX idx_songs_genre ON songs(genre_id);
+CREATE INDEX idx_songs_playcount ON songs(play_count DESC);
+CREATE INDEX idx_listening_history_user ON listening_history(user_id);
+CREATE INDEX idx_listening_history_song ON listening_history(song_id);
+CREATE INDEX idx_listening_history_date ON listening_history(listened_at DESC);
+```
 
 
 
